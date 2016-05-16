@@ -63,34 +63,36 @@ var startBatch = function() {
 exports.startBatch = startBatch;
 ```
 
+### Batch operations
+
 The `Batch.newBatch()` creates a batch operation object with the following structure:
 
-### Methods
+#### Methods
+
+| Name | Chainable | Description |
+| ---- | --------- | ----------- |
+| addLogger | X | Adds a logger for the callbacks. |
+| after | X | Defines a global callback that is invoked AFTER a callback of a batch operation.  |
+| before | X | Defines a global callback that is invoked BEFORE a callback of a batch operation. |
+| complete | X | Sets the completed callback for the operation.  |
+| error | X | Sets the error callback for the operation. |
+| ignoreErrors | X | Errors will be ignored in that operation and NOT rethrown.  |
+| setBatchId | X | Sets the ID of the underlying batch object.  |
+| setBatchName | X | Sets the name of underlying batch object. |
+| setId | X | Sets the ID of the operation. |
+| setName | X | Sets the (display) name of the operation. |
+| skipBefore | X | Skips the execution of the callback that was defined in `before()` method for that operation. |
+| start |  | Starts the operation. |
+| success | X | Sets the callback if the execution of the operation succeeded. |
+| then | X | Defines the callback for the next batch operation and returns it. |
+
+#### Properties
 
 | Name  | Description  |
 | ----- | ----------- |
-| addLogger |  |
-| after |  |
-| before |  |
-| complete |  |
-| error |  |
-| ignoreErrors |  |
-| setBatchId |  |
-| setBatchName |  |
-| setId |  |
-| setName |  |
-| skipBefore |  |
-| start |  |
-| success |  |
-| then |  |
-
-### Properties
-
-| Name  | Description  |
-| ----- | ----------- |
-| batchId |  |
-| batchName |  |
-| id |  |
-| items |  |
-| name |  |
-| object |  |
+| batchId | Gets the ID of the underlying batch. |
+| batchName | Gets the (display) name of the underlying batch.  |
+| id | Gets the ID of the current operation.  |
+| items | Gets an `ObservableArray` object that can be used in data binding context.  |
+| name | Gets the name of the current operation. |
+| object | Gets an `Observable` object that can be used in data binding context.  |
