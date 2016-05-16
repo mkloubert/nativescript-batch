@@ -156,8 +156,22 @@ function startBatch = function(args) {
     var listView = button.topmost().getViewById('my-listview');
 
     var batch = Batch.newBatch(function(ctx) {
+                                   // set 'text' property of 'bindingContext'
+                                   // of 'label'
+                                   ctx.object.set("labelText", "Operation #1");
+                                   
+                                   // add 'bindingContext'
+                                   // of 'label'
+                                   ctx.items.push({
+                                       text: "Operation #1 executed"
+                                   });
                                })
                      .then(function(ctx) {
+                               ctx.object.set("labelText", "Operation #2");
+                                   
+                               ctx.items.push({
+                                   text: "Operation #2 executed"
+                               });
                            });
     
     var listViewVM = new Observable();
@@ -177,14 +191,18 @@ The declaration of the underlying view:
     <Button row="0" text="Start"
             tap="{{ startBatch }}" />
     
-    <ListView id="my-listview"
-              row="1" items="{{ batchItems }}">
+    <StackPanel>
+      <Label id="my-label"
+             text="{{ labelText }}" />
+    
+      <ListView id="my-listview"
+                row="1" items="{{ batchItems }}">
               
-      <ListView.itemsTemplate>
-        <Label id="my-label"
-               text="{{ text }}" />
-      </ListView.itemsTemplate>
-    </ListView>
+        <ListView.itemsTemplate>
+          <Label text="{{ text }}" />
+        </ListView.itemsTemplate>
+      </ListView>
+    </StackPanel>
   </GridLayout>
 </Page>
 ```
