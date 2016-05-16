@@ -73,7 +73,7 @@ The `Batch.newBatch()` creates a batch operation object with the following struc
 
 | Name | Chainable | Description |
 | ---- | --------- | ----------- |
-| addLogger | X | Adds a logger for the callbacks. |
+| addLogger | X | Adds a logger function for the callbacks. The function will receives an context object with a `message` property that contains the value from the `log()` method of the execution context of a callback. |
 | after | X | Defines a global callback that is invoked AFTER a callback of a batch operation.  |
 | before | X | Defines a global callback that is invoked BEFORE a callback of a batch operation. |
 | complete | X | Sets the completed callback for the operation.  |
