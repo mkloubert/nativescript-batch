@@ -143,7 +143,7 @@ The `ctx` has the following structure:
 
 Each batch starts with an empty `Observable` and an empty `ObservableArray` that are submitted to each execution context of a callback.
 
-These objects can be used in any View like an [ListView](https://docs.nativescript.org/ui/ui-views#listview) or a [Label](https://docs.nativescript.org/ui/ui-views#label), e.g.
+These objects can be used in any View like a [ListView](https://docs.nativescript.org/ui/ui-views#listview) or a [Label](https://docs.nativescript.org/ui/ui-views#label), e.g.
 
 An example of a code-behind:
 
