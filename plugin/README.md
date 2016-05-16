@@ -204,7 +204,7 @@ The declaration of the underlying view:
              text="{{ labelText }}" />
     
       <ListView id="my-listview"
-                row="1" items="{{ batchItems }}">
+                items="{{ batchItems }}">
               
         <ListView.itemsTemplate>
           <Label text="{{ text }}" />
