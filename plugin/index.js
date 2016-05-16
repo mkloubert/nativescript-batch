@@ -64,7 +64,7 @@ addOperation = function(batchOperation, action) {
     
     // start batch operation
     newOperation.start = function() {
-        startBatch(batchOperation);
+        return startBatch(batchOperation);
     };
 
     // ignore errors
@@ -176,10 +176,11 @@ exports.newBatch = newBatch;
 
 // startBatch()
 function startBatch(batchOperation) {
-    var previousValue;
+    var batchResult;
     var nextValue;
-    var value;
+    var previousValue;    
     var skipNextOperation = false;
+    var value;
     for (var i = 0; i < batchOperation.__C40DB2DE.length; i++) {
         if (skipNextOperation) {
             skipNextOperation = false;
@@ -316,6 +317,13 @@ function startBatch(batchOperation) {
             set: function(niafv) { invokeAfter = niafv; }
         });
         
+        // result
+        Object.defineProperty(execCtx, 'result', {
+            get: function() { return batchResult; },
+            
+            set: function(br) { batchResult = br; }
+        });
+        
         var context;
         Object.defineProperty(execCtx, 'context', {
             get: function() { return context; }
@@ -386,4 +394,6 @@ function startBatch(batchOperation) {
         previousValue = nextValue;
         nextValue = undefined;
     }
+    
+    return batchResult;
 }
