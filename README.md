@@ -58,7 +58,28 @@ var startBatch = function() {
                  .error(function(ctx) {
                             ctx.log("ERROR in operation " + (ctx.index + 1) + ": " + ctx.error);
                         })
-          .start();
+         .start();
 };
 exports.startBatch = startBatch;
 ```
+
+The `Batch.newBatch()` creates a batch operation object with the following structure:
+
+### Methods
+
+| Name  | Description  |
+| ----- | ----------- |
+| addLogger |  |
+| after |  |
+| before |  |
+| complete |  |
+| error |  |
+| ignoreErrors |  |
+| setBatchId |  |
+| setBatchName |  |
+| setId |  |
+| setName |  |
+| skipBefore |  |
+| start |  |
+| success |  |
+| then |  |
