@@ -156,15 +156,15 @@ function startBatch = function(args) {
     var listView = button.topmost().getViewById('my-listview');
 
     var batch = Batch.newBatch(function(ctx) {
-                                   // set 'text' property of 'bindingContext'
+                                   // set 'labelText' property of 'bindingContext'
                                    // of 'label'
                                    //
                                    // this is the same object as
                                    // in 'batch.object'
                                    ctx.object.set("labelText", "Operation #1");
                                    
-                                   // add 'bindingContext'
-                                   // of 'label'
+                                   // add item for 'bindingContext'
+                                   // object of 'listView'
                                    //
                                    // this is the same object as
                                    // in 'batch.items'
