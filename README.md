@@ -136,3 +136,55 @@ The `ctx` has the following structure:
 | prevValue | Gets the value from the previous operation. |
 | result | Gets or sets the result value for all operation. |
 | value | Gets or sets the value for that and all upcoming operations. |
+
+### Data binding
+
+Each batch starts with an empty `Observable` and an empty `ObservableArray` that are submitted to each execution context of a callback.
+
+These objects can be used in any View like an [ListView](https://docs.nativescript.org/ui/ui-views#listview) or a [Label](https://docs.nativescript.org/ui/ui-views#label), e.g.
+
+An example of a code-behind:
+
+```javascript
+var Observable = require("data/observable").Observable;
+var Batch = require("nativescript-batch");
+
+function startBatch = function(args) {
+    var button = args.object;
+    
+    var label = button.topmost().getViewById('my-label');
+    var listView = button.topmost().getViewById('my-listview');
+
+    var batch = Batch.newBatch(function(ctx) {
+                               })
+                     .then(function(ctx) {
+                           });
+    
+    var listViewVM = new Observable();
+    listViewVM.set("batchItems", batch.items);
+                           
+    label.bindingContext = batch.object;
+    listView.bindingContext = listViewVM;
+}
+exports.startBatch = startBatch;
+```
+
+The declaration of the underlying view:
+
+```xml
+<Page xmlns="http://schemas.nativescript.org/tns.xsd" navigatingTo="onNavigatingTo">
+  <GridLayout rows="64,*">
+    <Button row="0" text="Start"
+            tap="{{ startBatch }}" />
+    
+    <ListView id="my-listview"
+              row="1" items="{{ batchItems }}">
+              
+      <ListView.itemsTemplate>
+        <Label id="my-label"
+               text="{{ text }}" />
+      </ListView.itemsTemplate>
+    </ListView>
+  </GridLayout>
+</Page>
+```
