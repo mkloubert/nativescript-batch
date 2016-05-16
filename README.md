@@ -158,10 +158,16 @@ function startBatch = function(args) {
     var batch = Batch.newBatch(function(ctx) {
                                    // set 'text' property of 'bindingContext'
                                    // of 'label'
+                                   //
+                                   // this is the same object as
+                                   // in 'batch.object'
                                    ctx.object.set("labelText", "Operation #1");
                                    
                                    // add 'bindingContext'
                                    // of 'label'
+                                   //
+                                   // this is the same object as
+                                   // in 'batch.items'
                                    ctx.items.push({
                                        text: "Operation #1 executed"
                                    });
