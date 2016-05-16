@@ -84,7 +84,7 @@ The `Batch.newBatch()` creates a batch operation object with the following struc
 | skipBefore | X | Skips the execution of the callback that was defined in `before()` method for that operation. |
 | start |  | Starts the operation. The result of that method can be defined in an execution context of a callback. |
 | success | X | Sets the callback if the execution of the operation succeeded. |
-| then | X | Defines the callback for the next batch operation and returns it. |
+| then |  | Defines the callback for the next batch operation and returns it. |
 
 #### Properties
 
