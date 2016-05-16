@@ -83,3 +83,14 @@ The `Batch.newBatch()` creates a batch operation object with the following struc
 | start |  |
 | success |  |
 | then |  |
+
+### Properties
+
+| Name  | Description  |
+| ----- | ----------- |
+| batchId |  |
+| batchName |  |
+| id |  |
+| items |  |
+| name |  |
+| object |  |
