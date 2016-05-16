@@ -136,7 +136,7 @@ The `ctx` has the following structure:
 | nextValue | Gets or sets the value for the next operation. That value will be written to `prevValue` in the next operation and `nextValue` is resetted at the same place. |
 | object | Gets an `Observable` object that can be used in data binding context.  |
 | prevValue | Gets the value from the previous operation. |
-| result | Gets or sets the result value for all operation. |
+| result | Gets or sets the result value for all operations. |
 | value | Gets or sets the value for that and all upcoming operations. |
 
 ### Data binding
