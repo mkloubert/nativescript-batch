@@ -194,7 +194,7 @@ exports.startBatch = startBatch;
 The declaration of the underlying view:
 
 ```xml
-<Page xmlns="http://schemas.nativescript.org/tns.xsd" navigatingTo="onNavigatingTo">
+<Page xmlns="http://schemas.nativescript.org/tns.xsd">
   <GridLayout rows="64,*">
     <Button row="0" text="Start"
             tap="{{ startBatch }}" />
