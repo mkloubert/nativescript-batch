@@ -148,14 +148,15 @@ These objects can be used in any View like a [ListView](https://docs.nativescrip
 An example of a code-behind:
 
 ```javascript
+var frame = require("ui/frame");
 var Observable = require("data/observable").Observable;
 var Batch = require("nativescript-batch");
 
 function startBatch = function(args) {
     var button = args.object;
     
-    var label = button.topmost().getViewById('my-label');
-    var listView = button.topmost().getViewById('my-listview');
+    var label = frame.topmost().getViewById('my-label');
+    var listView = frame.topmost().getViewById('my-listview');
 
     var batch = Batch.newBatch(function(ctx) {
                                    // set 'labelText' property of 'bindingContext'
@@ -187,6 +188,8 @@ function startBatch = function(args) {
                            
     label.bindingContext = batch.object;
     listView.bindingContext = listViewVM;
+    
+    batch.start();
 }
 exports.startBatch = startBatch;
 ```
