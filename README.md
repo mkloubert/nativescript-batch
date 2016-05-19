@@ -9,7 +9,7 @@ A [NativeScript](https://nativescript.org/) module for implementing batch operat
 
 ## License
 
-[MIT license](https://raw.githubusercontent.com/mkloubert/nativescript-applist/master/LICENSE)
+[MIT license](https://raw.githubusercontent.com/mkloubert/nativescript-batch/master/LICENSE)
 
 ## Platforms
 
