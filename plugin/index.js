@@ -290,6 +290,18 @@ var BatchOperation = (function () {
         this.name = value;
         return this;
     };
+    BatchOperation.prototype.setResult = function (value) {
+        this.batch.setResult(value);
+        return this;
+    };
+    BatchOperation.prototype.setResultAndValue = function (value) {
+        this.batch.setResultAndValue(value);
+        return this;
+    };
+    BatchOperation.prototype.setValue = function (value) {
+        this.batch.setValue(value);
+        return this;
+    };
     BatchOperation.prototype.skipBefore = function (value) {
         this._skipBefore = arguments.length < 1 ? true : value;
         return this;

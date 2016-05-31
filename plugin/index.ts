@@ -318,6 +318,21 @@ class BatchOperation implements IBatchOperation {
         return this;
     }
     
+    public setResult(value : any) : BatchOperation {
+        this.batch.setResult(value);
+        return this;
+    }
+
+    public setResultAndValue(value : any) : BatchOperation {
+        this.batch.setResultAndValue(value);
+        return this;
+    }
+
+    public setValue(value : any) : BatchOperation {
+        this.batch.setValue(value);
+        return this;
+    }
+    
     public skipBefore(value? : boolean) : BatchOperation {
         this._skipBefore = arguments.length < 1 ? true : value;
         return this;
@@ -786,6 +801,33 @@ export interface IBatchOperation {
      * @chainable
      */
     setName(name : string) : IBatchOperation;
+    
+    /**
+     * Sets the initial result value for all operations.
+     * 
+     * @chainable
+     * 
+     * @param any value The value.
+     */
+    setResult(value : any) : IBatchOperation;
+
+    /**
+     * Sets the initial result and execution value for all operations.
+     * 
+     * @chainable
+     * 
+     * @param any value The value.
+     */
+    setResultAndValue(value : any) : IBatchOperation;
+
+    /**
+     * Sets the initial execution value for all operations.
+     * 
+     * @chainable
+     * 
+     * @param any value The value.
+     */
+    setValue(value : any) : IBatchOperation;
     
     /**
      * Starts all operations.
