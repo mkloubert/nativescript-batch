@@ -34,10 +34,10 @@ Otherwise ...
 
 ## Example
 
-```bash
-var Batch = require("nativescript-batch");
+```typescript
+import Batch = require("nativescript-batch");
 
-var startBatch = function() {
+export function startBatch() {
     Batch.newBatch(function(ctx) {
                        ctx.log("Running 1st operation...");
                    }).complete(function(ctx) {
@@ -61,8 +61,7 @@ var startBatch = function() {
                             ctx.log("ERROR in operation " + (ctx.index + 1) + ": " + ctx.error);
                         })
          .start();
-};
-exports.startBatch = startBatch;
+}
 ```
 
 ### Batch operations
@@ -147,16 +146,16 @@ These objects can be used in any View like a [ListView](https://docs.nativescrip
 
 An example of a code-behind:
 
-```javascript
-var frame = require("ui/frame");
-var Observable = require("data/observable").Observable;
-var Batch = require("nativescript-batch");
+```typescript
+import Frame = require("ui/frame");
+import {Observable} from "data/observable";
+import Batch = require("nativescript-batch");
 
-function startBatch = function(args) {
+export function startBatch(args) {
     var button = args.object;
     
-    var label = frame.topmost().getViewById('my-label');
-    var listView = frame.topmost().getViewById('my-listview');
+    var label = Frame.topmost().getViewById('my-label');
+    var listView = Frame.topmost().getViewById('my-listview');
 
     var batch = Batch.newBatch(function(ctx) {
                                    // set 'labelText' property of 'bindingContext'
@@ -191,7 +190,6 @@ function startBatch = function(args) {
     
     batch.start();
 }
-exports.startBatch = startBatch;
 ```
 
 The declaration of the underlying view:

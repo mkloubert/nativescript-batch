@@ -7,393 +7,489 @@
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 // 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
+"use strict";
 var app = require("application");
-var Observable = require("data/observable").Observable;
-var ObservableArray = require("data/observable-array").ObservableArray;
-
-
-// addOperation()
-var addOperation;
-addOperation = function(batchOperation, action) {
-    var newOperation = {};
-    
-    // execute action
-    newOperation.__AF19949B = function(ctx) {
-        if (action) {
-            action(ctx);
-        }
-    };
-    
-    // action that is executed
-    // BEFORE each action
-    newOperation.before = function(beforeExecAction) {
-        batchOperation.__433B5D6FF = beforeExecAction;
+var observable_1 = require("data/observable");
+var observable_array_1 = require("data/observable-array");
+var TypeUtils = require("utils/types");
+var Batch = (function () {
+    function Batch(firstAction) {
+        this._operations = [];
+        this.loggers = [];
+        this._items = new observable_array_1.ObservableArray();
+        this._object = new observable_1.Observable();
+        this._operations
+            .push(new BatchOperation(this, firstAction));
+    }
+    Batch.prototype.addLogger = function (action) {
+        this.loggers
+            .push(action);
         return this;
     };
-    
-    // action that is executed
-    // AFTER each action
-    newOperation.after = function(afterExecAction) {
-        batchOperation.__096E312C4DA4 = afterExecAction;
+    Batch.prototype.after = function (afterAction) {
+        this.afterAction = afterAction;
         return this;
     };
-    
-    // success action
-    newOperation.success = function(successAction) {
-        this.__9027517002 = successAction;
+    Batch.prototype.before = function (beforeAction) {
+        this.beforeAction = beforeAction;
         return this;
     };
-    
-    // error action
-    newOperation.error = function(errAction) {
-        this.__FB3C2A741E = errAction;
-        return this;    
-    };
-
-    // completed action
-    newOperation.complete = function(completedAction) {
-        this.__99A17600D8 = completedAction;
-        return this;
-    };
-    
-    // next operation
-    newOperation.then = function(nextAction) {
-        return addOperation(batchOperation, nextAction);  
-    };
-    
-    // start batch operation
-    newOperation.start = function() {
-        return startBatch(batchOperation);
-    };
-
-    // ignore errors
-    newOperation.ignoreErrors = function() {
-        this.error(function() {});
-        return this;
-    };
-    
-    // add logger
-    newOperation.addLogger = function(loggerAction) {
-        batchOperation.__D5F414D3
-                      .push(loggerAction);
-                      
-        return this;
-    };
-
-    // id
-    Object.defineProperty(newOperation, 'id', {
-        get: function() { return newOperation.__0E6B715FF; }
+    Object.defineProperty(Batch.prototype, "firstOperation", {
+        get: function () {
+            return this._operations[0];
+        },
+        enumerable: true,
+        configurable: true
     });
-    newOperation.setId = function(newId) {
-        this.__0E6B715FF = newId;
+    Object.defineProperty(Batch.prototype, "items", {
+        get: function () {
+            return this._items;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Batch.prototype, "object", {
+        get: function () {
+            return this._object;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Batch.prototype.setResult = function (value) {
+        this._result = value;
         return this;
     };
-    
-    // name
-    Object.defineProperty(newOperation, 'name', {
-        get: function() { return newOperation.__E460818F; }
-    });
-    newOperation.setName = function(newName) {
-        this.__E460818F = newName;
+    Batch.prototype.setResultAndValue = function (value) {
+        return this.setResult(value)
+            .setValue(value);
+    };
+    Batch.prototype.setValue = function (value) {
+        this._value = value;
         return this;
     };
-    
-    // object
-    Object.defineProperty(newOperation, 'object', {
-        get: function() { return batchOperation.__00C3B3EA; }
-    });
-    
-    // items
-    Object.defineProperty(newOperation, 'items', {
-        get: function() { return batchOperation.__CD706B14754E4D27; }
-    });
-    
-    // batch id
-    Object.defineProperty(newOperation, 'batchId', {
-        get: function() { return batchOperation.id; }
-    });
-    newOperation.setBatchId = function(newBatchId) {
-        batchOperation.id = newBatchId;
-        return this;
-    };
-    
-    // batch name
-    Object.defineProperty(newOperation, 'batchName', {
-        get: function() { return batchOperation.name; }
-    });
-    newOperation.setBatchName = function(newBatchName) {
-        batchOperation.name = newBatchName;
-        return this;
-    };
-    
-    // skip global before action
-    newOperation.__A48144C34330A5A7 = false;
-    newOperation.skipBefore = function() {
-        newOperation.__A48144C34330A5A7 = true;
-        return this;
-    };
-    
-    batchOperation.__C40DB2DE
-                  .push(newOperation);
-                  
-    return newOperation;
-};
-
-// newBatch()
-var newBatch = function(firstAction) {
-    var batchOperation = {};
-    
-    // operations
-    batchOperation.__C40DB2DE = [];
-    
-    // log operation
-    batchOperation.__D5F414D3 = [];
-
-    // observable objects
-    batchOperation.__00C3B3EA = new Observable();
-    batchOperation.__CD706B14754E4D27 = new ObservableArray();
-    
-    // ID
-    var id;
-    Object.defineProperty(batchOperation, 'id', {
-        get: function() { return id; },
-        
-        set: function(i) { id = i; }
-    });
-    
-    // name
-    var name;
-    Object.defineProperty(batchOperation, 'name', {
-        get: function() { return name; },
-        
-        set: function(n) { name = n; }
-    });
-    
-    return addOperation(batchOperation, firstAction);
-};
-exports.newBatch = newBatch;
-
-// startBatch()
-function startBatch(batchOperation) {
-    var batchResult;
-    var nextValue;
-    var previousValue;    
-    var skipNextOperation = false;
-    var value;
-    for (var i = 0; i < batchOperation.__C40DB2DE.length; i++) {
-        if (skipNextOperation) {
-            skipNextOperation = false;
-            continue;
-        }
-        
-        var currentOperation = batchOperation.__C40DB2DE[i];
-
-        var execCtx = {};
-        
-        // log()
-        execCtx.log = function(msg) {
-            for (var ii = 0; ii < batchOperation.__D5F414D3.length; ii++) {
-                try {
-                    var logAction = batchOperation.__D5F414D3[ii];
-                    if (logAction) {
-                        logAction({
-                            message: msg    
-                        });
+    Batch.prototype.start = function () {
+        var result = this._result;
+        var previousValue;
+        var skipWhile;
+        var value = this._value;
+        for (var i = 0; i < this._operations.length; i++) {
+            var ctx = new BatchOperationContext(this._operations, i, previousValue);
+            ctx.result = result;
+            ctx.value = value;
+            if (!TypeUtils.isNullOrUndefined(skipWhile)) {
+                if (skipWhile(ctx)) {
+                    continue;
+                }
+            }
+            skipWhile = undefined;
+            var invokeCompletedAction = function () {
+                ctx.setExecutionContext(BatchOperationExecutionContext.complete);
+                if (ctx.invokeComplete && ctx.operation.completeAction) {
+                    ctx.operation.completeAction(ctx);
+                }
+            };
+            var handleErrorAction = true;
+            try {
+                // global "before" action
+                if (ctx.invokeBefore && ctx.operation.beforeAction) {
+                    ctx.setExecutionContext(BatchOperationExecutionContext.before);
+                    ctx.operation.beforeAction(ctx);
+                }
+                // action to invoke
+                if (ctx.invokeAction && ctx.operation.action) {
+                    ctx.setExecutionContext(BatchOperationExecutionContext.execution);
+                    ctx.operation.action(ctx);
+                }
+                // global "after" action
+                if (ctx.invokeAfter && ctx.operation.afterAction) {
+                    ctx.setExecutionContext(BatchOperationExecutionContext.after);
+                    ctx.operation.afterAction(ctx);
+                }
+                // success action
+                if (ctx.invokeSuccess && ctx.operation.successAction) {
+                    handleErrorAction = false;
+                    ctx.setExecutionContext(BatchOperationExecutionContext.success);
+                    ctx.operation.successAction(ctx);
+                }
+                invokeCompletedAction();
+            }
+            catch (e) {
+                ctx.setError(e);
+                ctx.setExecutionContext(BatchOperationExecutionContext.error);
+                if (handleErrorAction && ctx.operation.errorAction) {
+                    ctx.operation.errorAction(ctx);
+                }
+                else {
+                    if (!ctx.operation.ignoreOperationErrors) {
+                        throw e;
                     }
                 }
-                catch (le) {
-                    // ignore
-                }
+                invokeCompletedAction();
             }
-            
-            return this;
-        };
-        
-        // skipNext()
-        execCtx.skipNext = function() {
-            skipNextOperation = true;
-            return this;    
-        };
-        
-        // index
-        Object.defineProperty(execCtx, 'index', {
-            get: function() { return i; }
-        });
-        
-        // operation ID
-        Object.defineProperty(execCtx, 'id', {
-            get: function() { return currentOperation.id; }
-        });
-        
-        // operation name
-        Object.defineProperty(execCtx, 'name', {
-            get: function() { return currentOperation.name; }
-        });
-        
-        // batch ID
-        Object.defineProperty(execCtx, 'batchId', {
-            get: function() { return batchOperation.id; }
-        });
-        
-        // batch name
-        Object.defineProperty(execCtx, 'batchName', {
-            get: function() { return batchOperation.name; }
-        });
-        
-        // isFirst
-        Object.defineProperty(execCtx, 'isFirst', {
-            get: function() { return i === 0; }
-        });
-        
-        // isLast
-        Object.defineProperty(execCtx, 'isLast', {
-            get: function() { return (i + 1) === batchOperation.__C40DB2DE.length; }
-        });
-        
-        // isBetween
-        Object.defineProperty(execCtx, 'isBetween', {
-            get: function() { return !execCtx.isFirst && !execCtx.isLast; }
-        });
-        
-        // prevValue
-        Object.defineProperty(execCtx, 'prevValue', {
-            get: function() { return previousValue; }
-        });
-        
-        // nextValue
-        Object.defineProperty(execCtx, 'nextValue', {
-            get: function() { return nextValue; },
-            
-            set: function(nv) { nextValue = nv; }
-        });
-        
-        // value
-        Object.defineProperty(execCtx, 'value', {
-            get: function() { return value; },
-            
-            set: function(v) { value = v; }
-        });
-        
-        // object
-        Object.defineProperty(execCtx, 'object', {
-            get: function() { return batchOperation.__00C3B3EA; }
-        });
-        
-        // items
-        Object.defineProperty(execCtx, 'items', {
-            get: function() { return batchOperation.__CD706B14754E4D27; }
-        });
-        
-        // invokeSuccess
-        var invokeSuccess = true;
-        Object.defineProperty(execCtx, 'invokeSuccess', {
-            get: function() { return invokeSuccess; },
-            
-            set: function(nisv) { invokeSuccess = nisv; }
-        });
-        
-        // invokeCompleted
-        var invokeCompleted = true;
-        Object.defineProperty(execCtx, 'invokeCompleted', {
-            get: function() { return invokeCompleted; },
-            
-            set: function(nicv) { invokeCompleted = nicv; }
-        });
-        
-        // invokeAction
-        var invokeAction = true;
-        Object.defineProperty(execCtx, 'invokeAction', {
-            get: function() { return invokeAction; },
-            
-            set: function(niav) { invokeAction = niav; }
-        });
-        
-        // invokeAfter
-        var invokeAfter = true;
-        Object.defineProperty(execCtx, 'invokeAfter', {
-            get: function() { return invokeAfter; },
-            
-            set: function(niafv) { invokeAfter = niafv; }
-        });
-        
-        // result
-        Object.defineProperty(execCtx, 'result', {
-            get: function() { return batchResult; },
-            
-            set: function(br) { batchResult = br; }
-        });
-        
-        var context;
-        Object.defineProperty(execCtx, 'context', {
-            get: function() { return context; }
-        });
-        
-        var invokeCompletedAction = function() {
-            if (!invokeCompleted) {
-                return;
-            }
-            
-            context = "completed";
-            
-            if (currentOperation.__99A17600D8) {
-                currentOperation.__99A17600D8(execCtx);
-            }    
-        };
-
-        var handleErrorAction = true;
-        try {
-            // global BEFORE execute
-            if (batchOperation.__433B5D6FF && !currentOperation.__A48144C34330A5A7) {
-                context = "before";
-                
-                batchOperation.__433B5D6FF(execCtx);
-            }
-            
-            // action to execute
-            if (currentOperation.__AF19949B && invokeAction) {
-                context = "execution";
-                
-                currentOperation.__AF19949B(execCtx);    
-            }
-            
-            // global AFTER execute
-            if (batchOperation.__096E312C4DA4 && invokeAfter) {
-                context = "after";
-                
-                batchOperation.__096E312C4DA4(execCtx);
-            }
-            
-            // success
-            if (currentOperation.__9027517002 && invokeSuccess) {
-                handleErrorAction = false;
-                context = "success";
-                
-                currentOperation.__9027517002(execCtx);
-            }
-            
-            invokeCompletedAction();
+            previousValue = ctx.nextValue;
+            value = ctx.value;
+            result = ctx.result;
+            skipWhile = ctx.skipWhilePredicate;
         }
-        catch (e) {
-            // error
-            Object.defineProperty(execCtx, 'error', {
-                get: function() { return e; }
-            });
-            
-            if (currentOperation.__FB3C2A741E && handleErrorAction) {
-                currentOperation.__FB3C2A741E(execCtx);
-            }
-            else {
-                // rethrow because no action has been execution
-                throw e;
-            }
-            
-            invokeCompletedAction();
-        }
-        
-        previousValue = nextValue;
-        nextValue = undefined;
+        return result;
+    };
+    return Batch;
+}());
+var BatchLogContext = (function () {
+    function BatchLogContext(operation, time, msg) {
+        this._operation = operation;
+        this._message = msg;
     }
-    
-    return batchResult;
+    Object.defineProperty(BatchLogContext.prototype, "batch", {
+        get: function () {
+            return this.operation.batch;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchLogContext.prototype, "message", {
+        get: function () {
+            return this._message;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchLogContext.prototype, "operation", {
+        get: function () {
+            return this._operation;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchLogContext.prototype, "time", {
+        get: function () {
+            return this._time;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return BatchLogContext;
+}());
+var BatchOperation = (function () {
+    function BatchOperation(batch, action) {
+        this._skipBefore = false;
+        this.ignoreOperationErrors = false;
+        this._batch = batch;
+        this.action = action;
+    }
+    BatchOperation.prototype.addLogger = function (action) {
+        this._batch.addLogger(action);
+        return this;
+    };
+    BatchOperation.prototype.after = function (afterAction) {
+        this._batch.afterAction = afterAction;
+        return this;
+    };
+    Object.defineProperty(BatchOperation.prototype, "afterAction", {
+        get: function () {
+            return this._batch.afterAction;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperation.prototype, "batch", {
+        get: function () {
+            return this._batch;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperation.prototype, "batchId", {
+        get: function () {
+            return this.batch.id;
+        },
+        set: function (value) {
+            this.batch.id = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperation.prototype, "batchName", {
+        get: function () {
+            return this.batch.name;
+        },
+        set: function (value) {
+            this.batch.name = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    BatchOperation.prototype.before = function (beforeAction) {
+        this._batch.beforeAction = beforeAction;
+        return this;
+    };
+    Object.defineProperty(BatchOperation.prototype, "beforeAction", {
+        get: function () {
+            return this._batch.beforeAction;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    BatchOperation.prototype.complete = function (completedAction) {
+        this.completeAction = completedAction;
+        return this;
+    };
+    BatchOperation.prototype.error = function (errAction) {
+        this.errorAction = errAction;
+        return this;
+    };
+    BatchOperation.prototype.ignoreErrors = function (flag) {
+        this.ignoreOperationErrors = arguments.length < 1 ? true : flag;
+        return this;
+    };
+    BatchOperation.prototype.log = function (msg) {
+        var ctx = new BatchLogContext(this, new Date(), msg);
+        for (var i = 0; i < this.batch.loggers.length; i++) {
+            try {
+                var l = this.batch.loggers[i];
+                l(ctx);
+            }
+            catch (e) {
+            }
+        }
+        return this;
+    };
+    Object.defineProperty(BatchOperation.prototype, "items", {
+        get: function () {
+            return this.batch.items;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperation.prototype, "object", {
+        get: function () {
+            return this.batch.object;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    BatchOperation.prototype.setBatchId = function (value) {
+        this.batch.id = value;
+        return this;
+    };
+    BatchOperation.prototype.setBatchName = function (value) {
+        this.batch.name = value;
+        return this;
+    };
+    BatchOperation.prototype.setId = function (value) {
+        this.id = value;
+        return this;
+    };
+    BatchOperation.prototype.setName = function (value) {
+        this.name = value;
+        return this;
+    };
+    BatchOperation.prototype.skipBefore = function (value) {
+        this._skipBefore = arguments.length < 1 ? true : value;
+        return this;
+    };
+    BatchOperation.prototype.start = function () {
+        this.batch.start();
+    };
+    BatchOperation.prototype.success = function (successAction) {
+        this.successAction = successAction;
+        return this;
+    };
+    BatchOperation.prototype.then = function (action) {
+        return new BatchOperation(this._batch, action);
+    };
+    return BatchOperation;
+}());
+var BatchOperationContext = (function () {
+    function BatchOperationContext(operations, index, prevValue) {
+        this.invokeAction = true;
+        this.invokeAfter = true;
+        this.invokeBefore = true;
+        this.invokeComplete = true;
+        this.invokeSuccess = true;
+        this._operation = operations[index];
+        this._index = index;
+        this._isLast = index >= (operations.length - 1);
+        this._prevValue = prevValue;
+    }
+    Object.defineProperty(BatchOperationContext.prototype, "batch", {
+        get: function () {
+            return this.operation.batch;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperationContext.prototype, "batchId", {
+        get: function () {
+            return this.operation.batch.id;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperationContext.prototype, "batchName", {
+        get: function () {
+            return this.operation.batch.name;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperationContext.prototype, "context", {
+        get: function () {
+            var execCtx = this.executionContext;
+            if (TypeUtils.isNullOrUndefined(execCtx)) {
+                return undefined;
+            }
+            return BatchOperationExecutionContext[execCtx];
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperationContext.prototype, "executionContext", {
+        get: function () {
+            return this._executionContext;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperationContext.prototype, "error", {
+        get: function () {
+            return this._error;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperationContext.prototype, "id", {
+        get: function () {
+            return this.operation.id;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperationContext.prototype, "index", {
+        get: function () {
+            return this._index;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperationContext.prototype, "isBetween", {
+        get: function () {
+            return 0 !== this._index &&
+                !this._isLast;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperationContext.prototype, "isFirst", {
+        get: function () {
+            return 0 === this._index;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperationContext.prototype, "isLast", {
+        get: function () {
+            return this._isLast;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperationContext.prototype, "name", {
+        get: function () {
+            return this.operation.name;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperationContext.prototype, "operation", {
+        get: function () {
+            return this._operation;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperationContext.prototype, "prevValue", {
+        get: function () {
+            return this._prevValue;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    BatchOperationContext.prototype.setExecutionContext = function (value) {
+        this._executionContext = value;
+        return this;
+    };
+    BatchOperationContext.prototype.setError = function (error) {
+        this._error = error;
+        return this;
+    };
+    BatchOperationContext.prototype.setResultAndValue = function (value) {
+        this.result = value;
+        this.value = value;
+        return this;
+    };
+    BatchOperationContext.prototype.skip = function (cnt) {
+        if (arguments.length < 1) {
+            cnt = 1;
+        }
+        return this.skipWhile(function (ctx) { return cnt-- > 0; });
+    };
+    BatchOperationContext.prototype.skipAll = function (flag) {
+        if (arguments.length < 1) {
+            flag = true;
+        }
+        return this.skipWhile(function () { return flag; });
+    };
+    BatchOperationContext.prototype.skipNext = function (flag) {
+        this.skip(arguments.length < 1 ? 1
+            : (flag ? 1 : 0));
+        return this;
+    };
+    BatchOperationContext.prototype.skipWhile = function (predicate) {
+        this.skipWhilePredicate = predicate;
+        return this;
+    };
+    return BatchOperationContext;
+}());
+/**
+ * List of batch operation execution types.
+ */
+(function (BatchOperationExecutionContext) {
+    /**
+     * Global "before" action.
+     */
+    BatchOperationExecutionContext[BatchOperationExecutionContext["before"] = 0] = "before";
+    /**
+     * Operation action is executed.
+     */
+    BatchOperationExecutionContext[BatchOperationExecutionContext["execution"] = 1] = "execution";
+    /**
+     * Global "after" action.
+     */
+    BatchOperationExecutionContext[BatchOperationExecutionContext["after"] = 2] = "after";
+    /**
+     * "Success" action is executed.
+     */
+    BatchOperationExecutionContext[BatchOperationExecutionContext["success"] = 3] = "success";
+    /**
+     * "Error" action is executed.
+     */
+    BatchOperationExecutionContext[BatchOperationExecutionContext["error"] = 4] = "error";
+    /**
+     * "Completed" action is executed.
+     */
+    BatchOperationExecutionContext[BatchOperationExecutionContext["complete"] = 5] = "complete";
+})(exports.BatchOperationExecutionContext || (exports.BatchOperationExecutionContext = {}));
+var BatchOperationExecutionContext = exports.BatchOperationExecutionContext;
+/**
+ * Creates a new batch.
+ *
+ * @function newBatch
+ *
+ * @return {IBatchOperation} The first operation of the created batch.
+ */
+function newBatch(firstAction) {
+    return new Batch(firstAction).firstOperation;
 }
+exports.newBatch = newBatch;
+//# sourceMappingURL=index.js.map
