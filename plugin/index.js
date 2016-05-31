@@ -136,13 +136,20 @@ var Batch = (function () {
     return Batch;
 }());
 var BatchLogContext = (function () {
-    function BatchLogContext(operation, time, msg) {
-        this._operation = operation;
+    function BatchLogContext(ctx, time, msg) {
+        this._context = ctx;
         this._message = msg;
     }
     Object.defineProperty(BatchLogContext.prototype, "batch", {
         get: function () {
             return this.operation.batch;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchLogContext.prototype, "context", {
+        get: function () {
+            return this._context;
         },
         enumerable: true,
         configurable: true
@@ -156,7 +163,7 @@ var BatchLogContext = (function () {
     });
     Object.defineProperty(BatchLogContext.prototype, "operation", {
         get: function () {
-            return this._operation;
+            return this.context.operation;
         },
         enumerable: true,
         configurable: true
@@ -383,7 +390,7 @@ var BatchOperationContext = (function () {
         configurable: true
     });
     BatchOperationContext.prototype.log = function (msg) {
-        var ctx = new BatchLogContext(this._operation, new Date(), msg);
+        var ctx = new BatchLogContext(this, new Date(), msg);
         for (var i = 0; i < this.batch.loggers.length; i++) {
             try {
                 var l = this.batch.loggers[i];

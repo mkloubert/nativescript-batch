@@ -168,14 +168,14 @@ class Batch implements IBatch {
 }
 
 class BatchLogContext implements IBatchLogContext {
+    private _context : BatchOperationContext;
     private _message : any;
-    private _operation : BatchOperation;
     private _time : Date;
     
-    constructor(operation : BatchOperation,
+    constructor(ctx : BatchOperationContext,
                 time : Date, msg: any) {
         
-        this._operation = operation;
+        this._context = ctx;
         this._message = msg;
     }
     
@@ -183,12 +183,16 @@ class BatchLogContext implements IBatchLogContext {
         return this.operation.batch;
     }
     
+    public get context() : BatchOperationContext {
+        return this._context;
+    }
+    
     public get message() : any {
         return this._message;
     }
     
     public get operation() : BatchOperation {
-        return this._operation;
+        return this.context.operation;
     }
     
     public get time() : Date {
@@ -404,7 +408,7 @@ class BatchOperationContext implements IBatchOperationContext {
     }
     
     public log(msg) : BatchOperationContext {
-        var ctx = new BatchLogContext(this._operation,
+        var ctx = new BatchLogContext(this,
                                       new Date(), msg);
         
         for (var i = 0; i < this.batch.loggers.length; i++) {
@@ -607,6 +611,13 @@ export interface IBatchLogContext {
      * @property
      */
     batch? : IBatch;
+    
+    /**
+     * Gets the underlying batch operation context.
+     * 
+     * @property
+     */
+    context? : IBatchOperationContext;
     
     /**
      * Gets the log message (value).
