@@ -242,18 +242,6 @@ var BatchOperation = (function () {
         this.ignoreOperationErrors = arguments.length < 1 ? true : flag;
         return this;
     };
-    BatchOperation.prototype.log = function (msg) {
-        var ctx = new BatchLogContext(this, new Date(), msg);
-        for (var i = 0; i < this.batch.loggers.length; i++) {
-            try {
-                var l = this.batch.loggers[i];
-                l(ctx);
-            }
-            catch (e) {
-            }
-        }
-        return this;
-    };
     Object.defineProperty(BatchOperation.prototype, "items", {
         get: function () {
             return this.batch.items;
@@ -394,6 +382,18 @@ var BatchOperationContext = (function () {
         enumerable: true,
         configurable: true
     });
+    BatchOperationContext.prototype.log = function (msg) {
+        var ctx = new BatchLogContext(this._operation, new Date(), msg);
+        for (var i = 0; i < this.batch.loggers.length; i++) {
+            try {
+                var l = this.batch.loggers[i];
+                l(ctx);
+            }
+            catch (e) {
+            }
+        }
+        return this;
+    };
     Object.defineProperty(BatchOperationContext.prototype, "name", {
         get: function () {
             return this.operation.name;

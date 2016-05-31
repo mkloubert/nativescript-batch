@@ -273,23 +273,6 @@ class BatchOperation implements IBatchOperation {
     
     public ignoreOperationErrors : boolean = false;
     
-    public log(msg) : BatchOperation {
-        var ctx = new BatchLogContext(this,
-                                      new Date(), msg);
-        
-        for (var i = 0; i < this.batch.loggers.length; i++) {
-            try {
-                var l = this.batch.loggers[i];
-                l(ctx);
-            }
-            catch (e) {
-                // ignore
-            }
-        }
-        
-        return this;
-    }
-    
     public get items() : ObservableArray<any> {
         return this.batch.items;
     }
@@ -418,6 +401,23 @@ class BatchOperationContext implements IBatchOperationContext {
     
     public get isLast() : boolean {
         return this._isLast;
+    }
+    
+    public log(msg) : BatchOperationContext {
+        var ctx = new BatchLogContext(this._operation,
+                                      new Date(), msg);
+        
+        for (var i = 0; i < this.batch.loggers.length; i++) {
+            try {
+                var l = this.batch.loggers[i];
+                l(ctx);
+            }
+            catch (e) {
+                // ignore
+            }
+        }
+        
+        return this;
     }
 
     public get name() : string {
@@ -643,7 +643,7 @@ export interface IBatchLogger {
 /**
  * Describes a batch operation.
  */
-export interface IBatchOperation extends IBatchLogger {
+export interface IBatchOperation {
     /**
      * Adds a logger.
      * 
@@ -794,7 +794,7 @@ export interface IBatchOperation extends IBatchLogger {
 /**
  * Describes a context of a batch operation.
  */
-export interface IBatchOperationContext {
+export interface IBatchOperationContext extends IBatchLogger {
     /**
      * Gets the underlying batch.
      * 
