@@ -79,16 +79,34 @@ var Batch = (function () {
         return this;
     };
     Batch.prototype.start = function () {
+        var me = this;
         var result = this._result;
         var previousValue;
         var skipWhile;
         var value = this._value;
+        var createCheckIfFinishedAction = function (index) {
+            return function () {
+                if (index < (me._operations.length - 1)) {
+                    return;
+                }
+                if (!TypeUtils.isNullOrUndefined(me.whenAllFinishedAction)) {
+                    var finishedOperation = new BatchOperation(me, me.whenAllFinishedAction);
+                    var ctx = new BatchOperationContext(previousValue);
+                    ctx.result = result;
+                    ctx.value = value;
+                    ctx.setExecutionContext(BatchOperationExecutionContext.finished);
+                    finishedOperation.action(ctx);
+                }
+            };
+        };
         for (var i = 0; i < this._operations.length; i++) {
-            var ctx = new BatchOperationContext(this._operations, i, previousValue);
+            var ctx = new BatchOperationContext(previousValue, this._operations, i);
             ctx.result = result;
             ctx.value = value;
+            ctx.checkIfFinishedAction = createCheckIfFinishedAction(i);
             if (!TypeUtils.isNullOrUndefined(skipWhile)) {
                 if (skipWhile(ctx)) {
+                    ctx.checkIfFinishedAction();
                     continue;
                 }
             }
@@ -143,6 +161,10 @@ var Batch = (function () {
             skipWhile = ctx.skipWhilePredicate;
         }
         return result;
+    };
+    Batch.prototype.whenAllFinished = function (action) {
+        this.whenAllFinishedAction = action;
+        return this;
     };
     return Batch;
 }());
@@ -219,20 +241,20 @@ var BatchOperation = (function () {
     });
     Object.defineProperty(BatchOperation.prototype, "batchId", {
         get: function () {
-            return this.batch.id;
+            return this._batch.id;
         },
         set: function (value) {
-            this.batch.id = value;
+            this._batch.id = value;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(BatchOperation.prototype, "batchName", {
         get: function () {
-            return this.batch.name;
+            return this._batch.name;
         },
         set: function (value) {
-            this.batch.name = value;
+            this._batch.name = value;
         },
         enumerable: true,
         configurable: true
@@ -262,24 +284,24 @@ var BatchOperation = (function () {
     };
     Object.defineProperty(BatchOperation.prototype, "items", {
         get: function () {
-            return this.batch.items;
+            return this._batch.items;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(BatchOperation.prototype, "object", {
         get: function () {
-            return this.batch.object;
+            return this._batch.object;
         },
         enumerable: true,
         configurable: true
     });
     BatchOperation.prototype.setBatchId = function (value) {
-        this.batch.id = value;
+        this._batch.id = value;
         return this;
     };
     BatchOperation.prototype.setBatchName = function (value) {
-        this.batch.name = value;
+        this._batch.name = value;
         return this;
     };
     BatchOperation.prototype.setId = function (value) {
@@ -291,15 +313,15 @@ var BatchOperation = (function () {
         return this;
     };
     BatchOperation.prototype.setResult = function (value) {
-        this.batch.setResult(value);
+        this._batch.setResult(value);
         return this;
     };
     BatchOperation.prototype.setResultAndValue = function (value) {
-        this.batch.setResultAndValue(value);
+        this._batch.setResultAndValue(value);
         return this;
     };
     BatchOperation.prototype.setValue = function (value) {
-        this.batch.setValue(value);
+        this._batch.setValue(value);
         return this;
     };
     BatchOperation.prototype.skipBefore = function (value) {
@@ -307,7 +329,7 @@ var BatchOperation = (function () {
         return this;
     };
     BatchOperation.prototype.start = function () {
-        this.batch.start();
+        this._batch.start();
     };
     BatchOperation.prototype.success = function (successAction) {
         this.successAction = successAction;
@@ -316,19 +338,26 @@ var BatchOperation = (function () {
     BatchOperation.prototype.then = function (action) {
         return new BatchOperation(this._batch, action);
     };
+    BatchOperation.prototype.whenAllFinished = function (action) {
+        this._batch.whenAllFinished(action);
+        return this;
+    };
     return BatchOperation;
 }());
 var BatchOperationContext = (function () {
-    function BatchOperationContext(operations, index, prevValue) {
+    function BatchOperationContext(previousValue, operations, index) {
         this.invokeAction = true;
         this.invokeAfter = true;
         this.invokeBefore = true;
         this.invokeComplete = true;
         this.invokeSuccess = true;
-        this._operation = operations[index];
         this._index = index;
-        this._isLast = index >= (operations.length - 1);
-        this._prevValue = prevValue;
+        if (arguments.length > 2) {
+            this._operation = operations[index];
+            this._isLast = index >= (operations.length - 1);
+        }
+        this._prevValue = previousValue;
+        this.checkIfFinishedAction = function () { };
     }
     Object.defineProperty(BatchOperationContext.prototype, "batch", {
         get: function () {
@@ -351,6 +380,10 @@ var BatchOperationContext = (function () {
         enumerable: true,
         configurable: true
     });
+    BatchOperationContext.prototype.checkIfFinished = function () {
+        this.checkIfFinishedAction();
+        return this;
+    };
     Object.defineProperty(BatchOperationContext.prototype, "context", {
         get: function () {
             var execCtx = this.executionContext;
@@ -392,15 +425,21 @@ var BatchOperationContext = (function () {
     });
     Object.defineProperty(BatchOperationContext.prototype, "isBetween", {
         get: function () {
-            return 0 !== this._index &&
-                !this._isLast;
+            if (this._index !== undefined) {
+                return 0 !== this._index &&
+                    !this._isLast;
+            }
+            return undefined;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(BatchOperationContext.prototype, "isFirst", {
         get: function () {
-            return 0 === this._index;
+            if (this._index !== undefined) {
+                return 0 === this._index;
+            }
+            return undefined;
         },
         enumerable: true,
         configurable: true
@@ -509,6 +548,10 @@ var BatchOperationContext = (function () {
      * "Completed" action is executed.
      */
     BatchOperationExecutionContext[BatchOperationExecutionContext["complete"] = 5] = "complete";
+    /**
+     * Global "finish all" action.
+     */
+    BatchOperationExecutionContext[BatchOperationExecutionContext["finished"] = 6] = "finished";
 })(exports.BatchOperationExecutionContext || (exports.BatchOperationExecutionContext = {}));
 var BatchOperationExecutionContext = exports.BatchOperationExecutionContext;
 /**

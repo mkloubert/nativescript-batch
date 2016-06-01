@@ -95,18 +95,43 @@ class Batch implements IBatch {
     }
 
     public start() : any {
-        var result : any = this._result;
+        var me = this;
+        var result = this._result;
         var previousValue;
         var skipWhile : (ctx : IBatchOperationContext) => boolean;
         var value : any = this._value;
+        
+        var createCheckIfFinishedAction = function(index) {
+            return function() {
+                if (index < (me._operations.length - 1)) {
+                    return;
+                }
+                
+                if (!TypeUtils.isNullOrUndefined(me.whenAllFinishedAction)) {
+                    var finishedOperation = new BatchOperation(me, me.whenAllFinishedAction);
+                    
+                    var ctx = new BatchOperationContext(previousValue);
+                    ctx.result = result;
+                    ctx.value = value;
+                                                  
+                    ctx.setExecutionContext(BatchOperationExecutionContext.finished);
+                    
+                    finishedOperation.action(ctx);
+                }
+            };
+        };
+        
         for (var i = 0; i < this._operations.length; i++) {
-            var ctx = new BatchOperationContext(this._operations, i,
-                                                previousValue);
+            var ctx = new BatchOperationContext(previousValue,
+                                                this._operations, i);
             ctx.result = result;
             ctx.value = value;
             
+            ctx.checkIfFinishedAction = createCheckIfFinishedAction(i);
+            
             if (!TypeUtils.isNullOrUndefined(skipWhile)) {
                 if (skipWhile(ctx)) {
+                    ctx.checkIfFinishedAction();
                     continue;
                 }
             }
@@ -173,9 +198,16 @@ class Batch implements IBatch {
             
             skipWhile = ctx.skipWhilePredicate;
         }
-        
+
         return result;
     }
+    
+    public whenAllFinished(action : (ctx : IBatchOperationContext) => void) : Batch {
+        this.whenAllFinishedAction = action;
+        return this;
+    }
+    
+    public whenAllFinishedAction : (ctx : IBatchOperationContext) => void;
 }
 
 class BatchLogContext implements IBatchLogContext {
@@ -243,17 +275,17 @@ class BatchOperation implements IBatchOperation {
     }
     
     public get batchId() : string {
-        return this.batch.id;
+        return this._batch.id;
     }
     public set batchId(value : string) {
-        this.batch.id = value;
+        this._batch.id = value;
     }
     
     public get batchName() : string {
-        return this.batch.name;
+        return this._batch.name;
     }
     public set batchName(value : string) {
-        this.batch.name = value;
+        this._batch.name = value;
     }
     
     public before(beforeAction : (ctx : IBatchOperationContext) => void) : BatchOperation {
@@ -289,22 +321,22 @@ class BatchOperation implements IBatchOperation {
     public ignoreOperationErrors : boolean = false;
     
     public get items() : ObservableArray<any> {
-        return this.batch.items;
+        return this._batch.items;
     }
     
     public name : string;
         
     public get object() : Observable {
-        return this.batch.object;
+        return this._batch.object;
     }
     
     public setBatchId(value : string) : BatchOperation {
-        this.batch.id = value;
+        this._batch.id = value;
         return this;
     }
     
     public setBatchName(value : string) : BatchOperation {
-        this.batch.name = value;
+        this._batch.name = value;
         return this;
     }
     
@@ -319,17 +351,17 @@ class BatchOperation implements IBatchOperation {
     }
     
     public setResult(value : any) : BatchOperation {
-        this.batch.setResult(value);
+        this._batch.setResult(value);
         return this;
     }
 
     public setResultAndValue(value : any) : BatchOperation {
-        this.batch.setResultAndValue(value);
+        this._batch.setResultAndValue(value);
         return this;
     }
 
     public setValue(value : any) : BatchOperation {
-        this.batch.setValue(value);
+        this._batch.setValue(value);
         return this;
     }
     
@@ -339,7 +371,7 @@ class BatchOperation implements IBatchOperation {
     }
     
     public start() {
-        this.batch.start();
+        this._batch.start();
     }
     
     public success(successAction : (ctx : IBatchOperationContext) => void) : BatchOperation {
@@ -352,6 +384,11 @@ class BatchOperation implements IBatchOperation {
     public then(action : (ctx : IBatchOperationContext) => void) : BatchOperation {
         return new BatchOperation(this._batch, action);
     }
+    
+    public whenAllFinished(action : (ctx : IBatchOperationContext) => void) : BatchOperation {
+        this._batch.whenAllFinished(action);
+        return this;
+    }
 }
 
 class BatchOperationContext implements IBatchOperationContext {
@@ -362,15 +399,19 @@ class BatchOperationContext implements IBatchOperationContext {
     private _prevValue;
     private _executionContext : BatchOperationExecutionContext;
     
-    constructor(operations : BatchOperation[],
-                index : number,
-                prevValue : any) {
+    constructor(previousValue : any,
+                operations? : BatchOperation[], index? : number) {
         
-        this._operation = operations[index];
         this._index = index;
         
-        this._isLast = index >= (operations.length - 1);
-        this._prevValue = prevValue;
+        if (arguments.length > 2) {
+            this._operation = operations[index];
+            this._isLast = index >= (operations.length - 1);
+        }
+        
+        this._prevValue = previousValue;
+        
+        this.checkIfFinishedAction = () => { };
     }
     
     public get batch() : Batch {
@@ -384,6 +425,13 @@ class BatchOperationContext implements IBatchOperationContext {
     public get batchName() : string {
         return this.operation.batch.name;
     }
+    
+    public checkIfFinished() : BatchOperationContext {
+        this.checkIfFinishedAction();
+        return this;
+    }
+    
+    public checkIfFinishedAction : () => void;
     
     public get context() : string {
         var execCtx = this.executionContext;
@@ -421,12 +469,20 @@ class BatchOperationContext implements IBatchOperationContext {
     public invokeSuccess : boolean = true;
     
     public get isBetween() : boolean {
-        return 0 !== this._index &&
-               !this._isLast;
+        if (this._index !== undefined) {
+            return 0 !== this._index &&
+                   !this._isLast;
+        }
+        
+        return undefined;
     }
     
     public get isFirst() : boolean {
-        return 0 === this._index;
+        if (this._index !== undefined) {
+            return 0 === this._index;
+        }
+        
+        return undefined;
     }
     
     public get isLast() : boolean {
@@ -547,7 +603,12 @@ export enum BatchOperationExecutionContext {
     /**
      * "Completed" action is executed.
      */
-    complete
+    complete,
+    
+    /**
+     * Global "finish all" action.
+     */
+    finished
 }
 
 
@@ -625,6 +686,15 @@ export interface IBatch {
      * @return any The result of the last / of all operations.
      */
     start() : any;
+    
+    /**
+     * Defines the logic that is invoked after all operations have been finished.
+     * 
+     * @chainable
+     * 
+     * @param {Function} action The action.
+     */
+    whenAllFinished(action : (ctx : IBatchOperationContext) => void) : IBatch;
 }
 
 /**
@@ -853,6 +923,15 @@ export interface IBatchOperation {
      * @param {Function} action The logic of the next operation.
      */
     then(action : (ctx : IBatchOperationContext) => void) : IBatchOperation;
+    
+    /**
+     * Defines the logic that is invoked after all operations have been finished.
+     * 
+     * @chainable
+     * 
+     * @param {Function} action The action.
+     */
+    whenAllFinished(action : (ctx : IBatchOperationContext) => void) : IBatchOperation;
 }
 
 /**
@@ -879,6 +958,13 @@ export interface IBatchOperationContext extends IBatchLogger {
      * @property
      */
     batchName : string;
+    
+    /**
+     * Marks that operation as finished.
+     * 
+     * @chainable
+     */
+    checkIfFinished() : IBatchOperationContext;
     
     /**
      * Gets the name of the execution context.
@@ -960,7 +1046,7 @@ export interface IBatchOperationContext extends IBatchLogger {
      * @property
      */
     isLast : boolean;
-    
+
     /**
      * Gets the name of the underlying operation.
      * 
