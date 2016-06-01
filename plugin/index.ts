@@ -120,6 +120,11 @@ class Batch implements IBatch {
     }
 
     public start() : any {
+        var finishedFlags : boolean[] = new Array(this._operations.length);
+        for (var i = 0; i < finishedFlags.length; i++) {
+            finishedFlags[i] = false;
+        }
+        
         var me = this;
         var result = this._result;
         var previousValue;
@@ -128,8 +133,11 @@ class Batch implements IBatch {
         
         var createCheckIfFinishedAction = function(index) {
             return function() {
-                if (index < (me._operations.length - 1)) {
-                    return;
+                finishedFlags[index] = true;
+                for (var i = 0; i < finishedFlags.length; i++) {
+                    if (!finishedFlags[i]) {
+                        return;
+                    }
                 }
                 
                 if (!TypeUtils.isNullOrUndefined(me.whenAllFinishedAction)) {

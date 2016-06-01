@@ -99,6 +99,10 @@ var Batch = (function () {
         return this;
     };
     Batch.prototype.start = function () {
+        var finishedFlags = new Array(this._operations.length);
+        for (var i = 0; i < finishedFlags.length; i++) {
+            finishedFlags[i] = false;
+        }
         var me = this;
         var result = this._result;
         var previousValue;
@@ -106,8 +110,11 @@ var Batch = (function () {
         var value = this._value;
         var createCheckIfFinishedAction = function (index) {
             return function () {
-                if (index < (me._operations.length - 1)) {
-                    return;
+                finishedFlags[index] = true;
+                for (var i = 0; i < finishedFlags.length; i++) {
+                    if (!finishedFlags[i]) {
+                        return;
+                    }
                 }
                 if (!TypeUtils.isNullOrUndefined(me.whenAllFinishedAction)) {
                     var finishedOperation = new BatchOperation(me, me.whenAllFinishedAction);
