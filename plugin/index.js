@@ -32,6 +32,13 @@ var Batch = (function () {
         this._operations
             .push(new BatchOperation(this, firstAction));
     }
+    Batch.prototype.addItems = function () {
+        for (var i = 0; i < arguments.length; i++) {
+            this._items
+                .push(arguments[i]);
+        }
+        return this;
+    };
     Batch.prototype.addLogger = function (action) {
         this.loggers
             .push(action);
@@ -66,6 +73,14 @@ var Batch = (function () {
         enumerable: true,
         configurable: true
     });
+    Batch.prototype.setObjectProperties = function (properties) {
+        if (!TypeUtils.isNullOrUndefined(properties)) {
+            for (var p in properties) {
+                this._object.set(p, properties[p]);
+            }
+        }
+        return this;
+    };
     Batch.prototype.setResult = function (value) {
         this._result = value;
         return this;
@@ -217,6 +232,13 @@ var BatchOperation = (function () {
         this._batch = batch;
         this.action = action;
     }
+    BatchOperation.prototype.addItems = function () {
+        for (var i = 0; i < arguments.length; i++) {
+            this._batch.items
+                .push(arguments[i]);
+        }
+        return this;
+    };
     BatchOperation.prototype.addLogger = function (action) {
         this._batch.addLogger(action);
         return this;
@@ -310,6 +332,10 @@ var BatchOperation = (function () {
     };
     BatchOperation.prototype.setName = function (value) {
         this.name = value;
+        return this;
+    };
+    BatchOperation.prototype.setObjectProperties = function (properties) {
+        this._batch.setObjectProperties(properties);
         return this;
     };
     BatchOperation.prototype.setResult = function (value) {

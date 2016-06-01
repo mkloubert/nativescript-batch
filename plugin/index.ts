@@ -40,6 +40,15 @@ class Batch implements IBatch {
             .push(new BatchOperation(this, firstAction));
     }
     
+    public addItems() : Batch {
+        for (var i = 0; i < arguments.length; i++) {
+            this._items
+                .push(arguments[i]);
+        }
+        
+        return this
+    }
+    
     public addLogger(action : (ctx : IBatchLogContext) => void) : Batch {
         this.loggers
             .push(action);
@@ -77,6 +86,16 @@ class Batch implements IBatch {
     
     public get object() : Observable {
         return this._object;
+    }
+    
+    public setObjectProperties(properties) : Batch {
+        if (!TypeUtils.isNullOrUndefined(properties)) {
+            for (var p in properties) {
+                this._object.set(p, properties[p]);
+            }
+        }
+        
+        return this;
     }
     
     public setResult(value : any) : Batch {
@@ -256,6 +275,15 @@ class BatchOperation implements IBatchOperation {
     
     public action : (ctx : IBatchOperationContext) => void;
     
+    public addItems() : BatchOperation {
+        for (var i = 0; i < arguments.length; i++) {
+            this._batch.items
+                       .push(arguments[i]);
+        }
+        
+        return this;
+    }
+    
     public addLogger(action : (ctx : IBatchLogContext) => void) : BatchOperation {
         this._batch.addLogger(action);
         return this;
@@ -347,6 +375,11 @@ class BatchOperation implements IBatchOperation {
     
     public setName(value : string) : BatchOperation {
         this.name = value;
+        return this;
+    }
+    
+    public setObjectProperties(properties) : BatchOperation {
+        this._batch.setObjectProperties(properties);
         return this;
     }
     
@@ -617,6 +650,15 @@ export enum BatchOperationExecutionContext {
  */
 export interface IBatch {
     /**
+     * Adds one or more items for the object in 'items' property.
+     * 
+     * @chainable
+     * 
+     * @param {Object} ...items One or more item to add.
+     */
+    addItems() : IBatch;
+    
+    /**
      * Adds a logger.
      * 
      * @chainable
@@ -624,7 +666,7 @@ export interface IBatch {
      * @param {Function} action The logger action.
      */
     addLogger(action : (ctx : IBatchLogContext) => void) : IBatch;
-    
+
     /**
      * Gets or sets the ID of the batch.
      * 
@@ -652,6 +694,15 @@ export interface IBatch {
      * @property
      */
     name : string;
+
+    /**
+     * Sets properties for the object in 'object' property.
+     * 
+     * @chainable
+     * 
+     * @param {Object} properties The object that contains the properties.
+     */
+    setObjectProperties(properties) : IBatch;
 
     /**
      * Sets the initial result value.
@@ -751,6 +802,15 @@ export interface IBatchLogger {
  * Describes a batch operation.
  */
 export interface IBatchOperation {
+    /**
+     * Adds one or more items for the object in 'items' property.
+     * 
+     * @chainable
+     * 
+     * @param {Object} ...items One or more item to add.
+     */
+    addItems() : IBatchOperation;
+    
     /**
      * Adds a logger.
      * 
@@ -871,6 +931,15 @@ export interface IBatchOperation {
      * @chainable
      */
     setName(name : string) : IBatchOperation;
+    
+    /**
+     * Sets properties for the object in 'object' property.
+     * 
+     * @chainable
+     * 
+     * @param {Object} properties The object that contains the properties.
+     */
+    setObjectProperties(properties) : IBatchOperation;
     
     /**
      * Sets the initial result value for all operations.
