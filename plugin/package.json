@@ -1,7 +1,7 @@
 {
   "name": "nativescript-batch",
   "description": "NativeScript module for implementing batch operations.",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "nativescript": {
     "platforms": {
       "android": "1.1.0",

@@ -160,9 +160,9 @@ var Batch = (function () {
                     ctx.operation.action(ctx);
                 }
                 // global "after" action
-                if (ctx.invokeAfter && ctx.operation.afterAction) {
+                if (ctx.invokeAfter && ctx.operation.batch.afterAction) {
                     ctx.setExecutionContext(BatchOperationExecutionContext.after);
-                    ctx.operation.afterAction(ctx);
+                    ctx.operation.batch.afterAction(ctx);
                 }
                 // success action
                 if (ctx.invokeSuccess && ctx.operation.successAction) {
@@ -262,13 +262,6 @@ var BatchOperation = (function () {
         this._batch.afterAction = afterAction;
         return this;
     };
-    Object.defineProperty(BatchOperation.prototype, "afterAction", {
-        get: function () {
-            return this._batch.afterAction;
-        },
-        enumerable: true,
-        configurable: true
-    });
     Object.defineProperty(BatchOperation.prototype, "batch", {
         get: function () {
             return this._batch;

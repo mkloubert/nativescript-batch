@@ -198,9 +198,9 @@ class Batch implements IBatch {
                 }
 
                 // global "after" action
-                if (ctx.invokeAfter && ctx.operation.afterAction) {
+                if (ctx.invokeAfter && ctx.operation.batch.afterAction) {
                     ctx.setExecutionContext(BatchOperationExecutionContext.after);
-                    ctx.operation.afterAction(ctx);
+                    ctx.operation.batch.afterAction(ctx);
                 }
                 
                 // success action
@@ -311,11 +311,7 @@ class BatchOperation implements IBatchOperation {
         this._batch.afterAction = afterAction;
         return this;
     }
-    
-    public get afterAction() {
-        return this._batch.afterAction;
-    }
-    
+
     public get batch() : Batch {
         return this._batch;
     }
@@ -697,6 +693,24 @@ export interface IBatch {
     addLogger(action : (ctx : IBatchLogContext) => void) : IBatch;
 
     /**
+     * Defines the global action that is invoke AFTER each operation.
+     * 
+     * @chainable
+     * 
+     * @param {Function} action The action to invoke.
+     */
+    after(action : (ctx : IBatchOperationContext) => void) : IBatch;
+    
+    /**
+     * Defines the global action that is invoke BEFORE each operation.
+     * 
+     * @chainable
+     * 
+     * @param {Function} action The action to invoke.
+     */
+    before(action : (ctx : IBatchOperationContext) => void) : IBatch;
+
+    /**
      * Gets or sets the ID of the batch.
      * 
      * @property
@@ -860,6 +874,22 @@ export interface IBatchOperation {
     addLogger(action : (ctx : IBatchLogContext) => void) : IBatchOperation;
     
     /**
+     * Defines the global action that is invoke AFTER each operation.
+     * 
+     * @chainable
+     * 
+     * @param {Function} action The action to invoke.
+     */
+    after(action : (ctx : IBatchOperationContext) => void) : IBatchOperation;
+
+    /**
+     * Gets the underlying batch.
+     * 
+     * @property
+     */
+    batch : IBatch;
+
+    /**
      * Gets or sets the ID of the underlying batch.
      * 
      * @property
@@ -872,13 +902,15 @@ export interface IBatchOperation {
      * @property
      */
     batchName : string;
-    
+
     /**
-     * Gets the underlying batch.
+     * Defines the global action that is invoke BEFORE each operation.
      * 
-     * @property
+     * @chainable
+     * 
+     * @param {Function} action The action to invoke.
      */
-    batch : IBatch;
+    before(action : (ctx : IBatchOperationContext) => void) : IBatchOperation;
     
     /**
      * Defines the "completed" action.
