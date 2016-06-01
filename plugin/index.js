@@ -25,6 +25,7 @@ var observable_array_1 = require("data/observable-array");
 var TypeUtils = require("utils/types");
 var Batch = (function () {
     function Batch(firstAction) {
+        this._invokeFinishedCheckForAll = false;
         this._operations = [];
         this.loggers = [];
         this._items = new observable_array_1.ObservableArray();
@@ -59,6 +60,10 @@ var Batch = (function () {
         enumerable: true,
         configurable: true
     });
+    Batch.prototype.invokeFinishedCheckForAll = function (flag) {
+        this._invokeFinishedCheckForAll = arguments.length < 1 ? true : flag;
+        return this;
+    };
     Object.defineProperty(Batch.prototype, "items", {
         get: function () {
             return this._items;
@@ -130,6 +135,9 @@ var Batch = (function () {
                 ctx.setExecutionContext(BatchOperationExecutionContext.complete);
                 if (ctx.invokeComplete && ctx.operation.completeAction) {
                     ctx.operation.completeAction(ctx);
+                }
+                if (me._invokeFinishedCheckForAll) {
+                    ctx.checkIfFinished();
                 }
             };
             var handleErrorAction = true;
@@ -302,6 +310,15 @@ var BatchOperation = (function () {
     };
     BatchOperation.prototype.ignoreErrors = function (flag) {
         this.ignoreOperationErrors = arguments.length < 1 ? true : flag;
+        return this;
+    };
+    BatchOperation.prototype.invokeFinishedCheckForAll = function (flag) {
+        if (arguments.length < 1) {
+            this._batch.invokeFinishedCheckForAll();
+        }
+        else {
+            this._batch.invokeFinishedCheckForAll(flag);
+        }
         return this;
     };
     Object.defineProperty(BatchOperation.prototype, "items", {

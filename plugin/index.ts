@@ -25,6 +25,7 @@ import {ObservableArray} from "data/observable-array";
 import TypeUtils = require("utils/types");
 
 class Batch implements IBatch {
+    private _invokeFinishedCheckForAll : boolean = false;
     private _items : ObservableArray<any>;
     private _name : string;
     private _object : Observable;
@@ -75,6 +76,11 @@ class Batch implements IBatch {
     }
     
     public id : string;
+    
+    public invokeFinishedCheckForAll(flag?: boolean) : Batch {
+        this._invokeFinishedCheckForAll = arguments.length < 1 ? true : flag;
+        return this;
+    }
 
     public loggers = [];
     
@@ -162,6 +168,10 @@ class Batch implements IBatch {
                 
                 if (ctx.invokeComplete && ctx.operation.completeAction) {
                     ctx.operation.completeAction(ctx);
+                }
+                
+                if (me._invokeFinishedCheckForAll) {
+                    ctx.checkIfFinished();
                 }
             };
             
@@ -347,6 +357,17 @@ class BatchOperation implements IBatchOperation {
     }
     
     public ignoreOperationErrors : boolean = false;
+    
+    public invokeFinishedCheckForAll(flag?: boolean) : BatchOperation {
+        if (arguments.length < 1) {
+            this._batch.invokeFinishedCheckForAll();
+        }
+        else {
+            this._batch.invokeFinishedCheckForAll(flag);
+        }
+        
+        return this;
+    }
     
     public get items() : ObservableArray<any> {
         return this._batch.items;
@@ -675,6 +696,16 @@ export interface IBatch {
     id : string;
     
     /**
+     * Defines if "checkIfFinished" method should be autmatically invoked after
+     * each operation.
+     * 
+     * @chainable
+     * 
+     * @param {Boolean} [flag] Automatically invoke "checkIfFinished" method or not. Default: (true) 
+     */
+    invokeFinishedCheckForAll(flag?: boolean) : IBatch;
+    
+    /**
      * Gets the batch wide (observable) array of items.
      * 
      * @property
@@ -874,6 +905,16 @@ export interface IBatchOperation {
      * @param {Boolean} [flag] The flag to set. Default: (true)
      */
     ignoreErrors(flag? : boolean) : IBatchOperation;
+
+    /**
+     * Defines if "checkIfFinished" method should be autmatically invoked after
+     * each operation.
+     * 
+     * @chainable
+     * 
+     * @param {Boolean} [flag] Automatically invoke "checkIfFinished" method or not. Default: (true) 
+     */
+    invokeFinishedCheckForAll(flag?: boolean) : IBatchOperation;
 
     /**
      * Gets the batch wide (observable) array of items.
