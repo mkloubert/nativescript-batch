@@ -125,9 +125,9 @@ class Batch implements IBatch {
     }
 
     public start() : any {
-        var finishedFlags: boolean[] = new Array(this.operations.length);
-        for (var i = 0; i < finishedFlags.length; i++) {
-            finishedFlags[i] = false;
+        var finishedFlags: boolean[] = [];
+        for (var i = 0; i < this._operations.length; i++) {
+            finishedFlags.push(false);
         }
         
         var me = this;

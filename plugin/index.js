@@ -109,9 +109,9 @@ var Batch = (function () {
         return this;
     };
     Batch.prototype.start = function () {
-        var finishedFlags = new Array(this.operations.length);
-        for (var i = 0; i < finishedFlags.length; i++) {
-            finishedFlags[i] = false;
+        var finishedFlags = [];
+        for (var i = 0; i < this._operations.length; i++) {
+            finishedFlags.push(false);
         }
         var me = this;
         var result = this._result;
