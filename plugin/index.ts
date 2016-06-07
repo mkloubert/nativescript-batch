@@ -171,7 +171,21 @@ class Batch implements IBatch {
             
             skipWhile = undefined;
             
-            var invokeCompletedAction = function() {
+            var checkIfCancelled = function() {
+                if (ctx.cancelled) {
+                    ctx.setExecutionContext(BatchOperationExecutionContext.cancelled);
+                    
+                    if (!TypeUtils.isNullOrUndefined(me.whenCancelledAction)) {
+                        me.whenCancelledAction(ctx);
+                    }
+                    
+                    return true;
+                }
+                
+                return false;    
+            };
+            
+            var invokeCompletedAction = function() : boolean {
                 ctx.setExecutionContext(BatchOperationExecutionContext.complete);
                 
                 if (ctx.invokeComplete && ctx.operation.completeAction) {
@@ -181,6 +195,8 @@ class Batch implements IBatch {
                 if (me._invokeFinishedCheckForAll) {
                     ctx.checkIfFinished();
                 }
+                
+                return !checkIfCancelled();
             };
             
             var handleErrorAction = true;
@@ -189,18 +205,30 @@ class Batch implements IBatch {
                 if (ctx.invokeBefore && ctx.operation.beforeAction) {
                     ctx.setExecutionContext(BatchOperationExecutionContext.before);
                     ctx.operation.beforeAction(ctx);
+                    
+                    if (checkIfCancelled()) {
+                        break;  // cancelled
+                    }
                 }
                 
                 // action to invoke
                 if (ctx.invokeAction && ctx.operation.action) {
                     ctx.setExecutionContext(BatchOperationExecutionContext.execution);
                     ctx.operation.action(ctx);
+                    
+                    if (checkIfCancelled()) {
+                        break;  // cancelled
+                    }
                 }
 
                 // global "after" action
                 if (ctx.invokeAfter && ctx.operation.batch.afterAction) {
                     ctx.setExecutionContext(BatchOperationExecutionContext.after);
                     ctx.operation.batch.afterAction(ctx);
+                    
+                    if (checkIfCancelled()) {
+                        break;  // cancelled
+                    }
                 }
                 
                 // success action
@@ -209,16 +237,24 @@ class Batch implements IBatch {
                     
                     ctx.setExecutionContext(BatchOperationExecutionContext.success);
                     ctx.operation.successAction(ctx);
+                    
+                    if (checkIfCancelled()) {
+                        break;  // cancelled
+                    }
                 }
                 
-                invokeCompletedAction();
+                if (!invokeCompletedAction()) {
+                    break;  // cancelled
+                }
             }
             catch (e) {
                 ctx.setError(e);
                 ctx.setExecutionContext(BatchOperationExecutionContext.error);
                 
                 if (handleErrorAction && ctx.operation.errorAction) {
-                    ctx.operation.errorAction(ctx);
+                    if (ctx.invokeError) {
+                        ctx.operation.errorAction(ctx);
+                    }
                 }
                 else {
                     if (!ctx.operation.ignoreOperationErrors) {
@@ -226,9 +262,15 @@ class Batch implements IBatch {
                     }
                 }
                 
-                invokeCompletedAction();
+                if (checkIfCancelled()) {
+                    break;  // cancelled
+                }
+                
+                if (!invokeCompletedAction()) {
+                    break;  // cancelled
+                }
             }
-            
+
             previousValue = ctx.nextValue;
             value = ctx.value;
             result = ctx.result;
@@ -245,6 +287,13 @@ class Batch implements IBatch {
     }
     
     public whenAllFinishedAction : (ctx : IBatchOperationContext) => void;
+    
+    public whenCancelled(action : (ctx : IBatchOperationContext) => void) : Batch {
+        this.whenCancelledAction = action;
+        return this;
+    }
+    
+    public whenCancelledAction : (ctx : IBatchOperationContext) => void;
 }
 
 class BatchLogContext implements IBatchLogContext {
@@ -444,7 +493,12 @@ class BatchOperation implements IBatchOperation {
     }
     
     public whenAllFinished(action : (ctx : IBatchOperationContext) => void) : BatchOperation {
-        this._batch.whenAllFinished(action);
+        this._batch.whenAllFinishedAction = action;
+        return this;
+    }
+    
+    public whenCancelled(action : (ctx : IBatchOperationContext) => void) : BatchOperation {
+        this._batch.whenCancelledAction = action;
         return this;
     }
 }
@@ -483,6 +537,13 @@ class BatchOperationContext implements IBatchOperationContext {
     public get batchName() : string {
         return this.operation.batch.name;
     }
+    
+    public cancel(flag?: boolean) : BatchOperationContext {
+        this.cancelled = arguments.length < 1 ? true : flag;
+        return this;
+    }
+    
+    public cancelled : boolean = false;
     
     public checkIfFinished() : BatchOperationContext {
         this.checkIfFinishedAction();
@@ -523,6 +584,8 @@ class BatchOperationContext implements IBatchOperationContext {
     public invokeBefore : boolean = true;
     
     public invokeComplete : boolean = true;
+    
+    public invokeError : boolean = true;
     
     public invokeSuccess : boolean = true;
     
@@ -666,7 +729,12 @@ export enum BatchOperationExecutionContext {
     /**
      * Global "finish all" action.
      */
-    finished
+    finished,
+    
+    /**
+     * Global "cancelled" action.
+     */
+    cancelled
 }
 
 
@@ -799,6 +867,15 @@ export interface IBatch {
      * @param {Function} action The action.
      */
     whenAllFinished(action : (ctx : IBatchOperationContext) => void) : IBatch;
+    
+    /**
+     * Defined the logic that is invoked when batch have been cancelled.
+     * 
+     * @chainable
+     * 
+     * @param {Function} action The action.
+     */
+    whenCancelled(action : (ctx : IBatchOperationContext) => void) : IBatch;
 }
 
 /**
@@ -1082,6 +1159,15 @@ export interface IBatchOperation {
      * @param {Function} action The action.
      */
     whenAllFinished(action : (ctx : IBatchOperationContext) => void) : IBatchOperation;
+    
+    /**
+     * Defined the logic that is invoked when batch have been cancelled.
+     * 
+     * @chainable
+     * 
+     * @param {Function} action The action.
+     */
+    whenCancelled(action : (ctx : IBatchOperationContext) => void) : IBatchOperation;
 }
 
 /**
@@ -1110,6 +1196,15 @@ export interface IBatchOperationContext extends IBatchLogger {
     batchName : string;
     
     /**
+     * Cancels all opcoming operations.
+     * 
+     * @chainable
+     * 
+     * @param {Boolean} [flag] Cancel upcoming operations or not. Default: (true)
+     */
+    cancel(flag?: boolean) : IBatchOperationContext;
+    
+    /**
      * Marks that operation as finished.
      * 
      * @chainable
@@ -1122,6 +1217,13 @@ export interface IBatchOperationContext extends IBatchLogger {
      * @property
      */
     context : string;
+
+    /**
+     * Gets the thrown error.
+     * 
+     * @property
+     */
+    error? : any;
     
     /**
      * Gets the current execution context.
@@ -1129,13 +1231,6 @@ export interface IBatchOperationContext extends IBatchLogger {
      * @property
      */
     executionContext? : BatchOperationExecutionContext;
-    
-    /**
-     * Gets the thrown error.
-     * 
-     * @property
-     */
-    error? : any;
     
     /**
      * Gets the ID of the underlying operation.
@@ -1170,6 +1265,11 @@ export interface IBatchOperationContext extends IBatchLogger {
      * Defines if "completed" action should be invoked or not.
      */
     invokeComplete : boolean;
+    
+    /**
+     * Defines if "error" action should be invoked or not.
+     */
+    invokeError : boolean;
     
     /**
      * Defines if "success" action should be invoked or not.

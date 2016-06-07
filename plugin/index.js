@@ -138,6 +138,16 @@ var Batch = (function () {
                 }
             }
             skipWhile = undefined;
+            var checkIfCancelled = function () {
+                if (ctx.cancelled) {
+                    ctx.setExecutionContext(BatchOperationExecutionContext.cancelled);
+                    if (!TypeUtils.isNullOrUndefined(me.whenCancelledAction)) {
+                        me.whenCancelledAction(ctx);
+                    }
+                    return true;
+                }
+                return false;
+            };
             var invokeCompletedAction = function () {
                 ctx.setExecutionContext(BatchOperationExecutionContext.complete);
                 if (ctx.invokeComplete && ctx.operation.completeAction) {
@@ -146,6 +156,7 @@ var Batch = (function () {
                 if (me._invokeFinishedCheckForAll) {
                     ctx.checkIfFinished();
                 }
+                return !checkIfCancelled();
             };
             var handleErrorAction = true;
             try {
@@ -153,37 +164,58 @@ var Batch = (function () {
                 if (ctx.invokeBefore && ctx.operation.beforeAction) {
                     ctx.setExecutionContext(BatchOperationExecutionContext.before);
                     ctx.operation.beforeAction(ctx);
+                    if (checkIfCancelled()) {
+                        break; // cancelled
+                    }
                 }
                 // action to invoke
                 if (ctx.invokeAction && ctx.operation.action) {
                     ctx.setExecutionContext(BatchOperationExecutionContext.execution);
                     ctx.operation.action(ctx);
+                    if (checkIfCancelled()) {
+                        break; // cancelled
+                    }
                 }
                 // global "after" action
                 if (ctx.invokeAfter && ctx.operation.batch.afterAction) {
                     ctx.setExecutionContext(BatchOperationExecutionContext.after);
                     ctx.operation.batch.afterAction(ctx);
+                    if (checkIfCancelled()) {
+                        break; // cancelled
+                    }
                 }
                 // success action
                 if (ctx.invokeSuccess && ctx.operation.successAction) {
                     handleErrorAction = false;
                     ctx.setExecutionContext(BatchOperationExecutionContext.success);
                     ctx.operation.successAction(ctx);
+                    if (checkIfCancelled()) {
+                        break; // cancelled
+                    }
                 }
-                invokeCompletedAction();
+                if (!invokeCompletedAction()) {
+                    break; // cancelled
+                }
             }
             catch (e) {
                 ctx.setError(e);
                 ctx.setExecutionContext(BatchOperationExecutionContext.error);
                 if (handleErrorAction && ctx.operation.errorAction) {
-                    ctx.operation.errorAction(ctx);
+                    if (ctx.invokeError) {
+                        ctx.operation.errorAction(ctx);
+                    }
                 }
                 else {
                     if (!ctx.operation.ignoreOperationErrors) {
                         throw e;
                     }
                 }
-                invokeCompletedAction();
+                if (checkIfCancelled()) {
+                    break; // cancelled
+                }
+                if (!invokeCompletedAction()) {
+                    break; // cancelled
+                }
             }
             previousValue = ctx.nextValue;
             value = ctx.value;
@@ -194,6 +226,10 @@ var Batch = (function () {
     };
     Batch.prototype.whenAllFinished = function (action) {
         this.whenAllFinishedAction = action;
+        return this;
+    };
+    Batch.prototype.whenCancelled = function (action) {
+        this.whenCancelledAction = action;
         return this;
     };
     return Batch;
@@ -382,17 +418,23 @@ var BatchOperation = (function () {
         return new BatchOperation(this._batch, action);
     };
     BatchOperation.prototype.whenAllFinished = function (action) {
-        this._batch.whenAllFinished(action);
+        this._batch.whenAllFinishedAction = action;
+        return this;
+    };
+    BatchOperation.prototype.whenCancelled = function (action) {
+        this._batch.whenCancelledAction = action;
         return this;
     };
     return BatchOperation;
 }());
 var BatchOperationContext = (function () {
     function BatchOperationContext(previousValue, operations, index) {
+        this.cancelled = false;
         this.invokeAction = true;
         this.invokeAfter = true;
         this.invokeBefore = true;
         this.invokeComplete = true;
+        this.invokeError = true;
         this.invokeSuccess = true;
         this._index = index;
         if (arguments.length > 2) {
@@ -423,6 +465,10 @@ var BatchOperationContext = (function () {
         enumerable: true,
         configurable: true
     });
+    BatchOperationContext.prototype.cancel = function (flag) {
+        this.cancelled = arguments.length < 1 ? true : flag;
+        return this;
+    };
     BatchOperationContext.prototype.checkIfFinished = function () {
         this.checkIfFinishedAction();
         return this;
@@ -595,6 +641,10 @@ var BatchOperationContext = (function () {
      * Global "finish all" action.
      */
     BatchOperationExecutionContext[BatchOperationExecutionContext["finished"] = 6] = "finished";
+    /**
+     * Global "cancelled" action.
+     */
+    BatchOperationExecutionContext[BatchOperationExecutionContext["cancelled"] = 7] = "cancelled";
 })(exports.BatchOperationExecutionContext || (exports.BatchOperationExecutionContext = {}));
 var BatchOperationExecutionContext = exports.BatchOperationExecutionContext;
 /**
