@@ -127,7 +127,7 @@ var Batch = (function () {
                     }
                 }
                 if (!TypeUtils.isNullOrUndefined(me.whenAllFinishedAction)) {
-                    var finishedOperation = new BatchOperation(me, me.whenAllFinishedAction);
+                    var finishedOperation = new BatchOperation(me, me.whenAllFinishedAction, false);
                     var ctx = new BatchOperationContext(previousValue);
                     ctx.result = result;
                     ctx.value = value;
@@ -287,12 +287,15 @@ var BatchLogContext = (function () {
     return BatchLogContext;
 }());
 var BatchOperation = (function () {
-    function BatchOperation(batch, action) {
+    function BatchOperation(batch, action, appendOperation) {
+        if (appendOperation === void 0) { appendOperation = true; }
         this._skipBefore = false;
         this.ignoreOperationErrors = false;
         this._batch = batch;
         this.action = action;
-        batch.operations.push(this);
+        if (appendOperation) {
+            batch.operations.push(this);
+        }
     }
     BatchOperation.prototype.addItems = function () {
         var items = [];

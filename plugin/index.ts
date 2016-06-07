@@ -146,7 +146,8 @@ class Batch implements IBatch {
                 }
                 
                 if (!TypeUtils.isNullOrUndefined(me.whenAllFinishedAction)) {
-                    var finishedOperation = new BatchOperation(me, me.whenAllFinishedAction);
+                    var finishedOperation = new BatchOperation(me, me.whenAllFinishedAction,
+                                                               false);
                     
                     var ctx = new BatchOperationContext(previousValue);
                     ctx.result = result;
@@ -339,13 +340,15 @@ class BatchOperation implements IBatchOperation {
     private _id: string;
     private _skipBefore: boolean = false;
 
-    constructor(batch : Batch,
-                action : (ctx : IBatchOperationContext) => void) {
+    constructor(batch : Batch, action : (ctx : IBatchOperationContext) => void,
+                appendOperation: boolean = true) {
                     
         this._batch = batch;
         this.action = action;
 
-        batch.operations.push(this);
+        if (appendOperation) {
+            batch.operations.push(this);
+        }
     }
     
     public action : (ctx : IBatchOperationContext) => void;
