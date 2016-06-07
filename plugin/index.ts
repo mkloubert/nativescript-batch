@@ -29,21 +29,23 @@ class Batch implements IBatch {
     private _invokeFinishedCheckForAll: boolean = false;
     private _items: ObservableArray<any>;
     private _name: string;
-    private _object: Observable;    
+    private _object: Observable;
+    private _operations: BatchOperation[];
     private _result: any;
     private _value: any;
     
     constructor(firstAction : (ctx : IBatchOperationContext) => void) {
         this._items = new ObservableArray<any>();
         this._object = new Observable();
+        this._operations = [];
         
         this._firstOperation = new BatchOperation(this, firstAction);
     }
     
-    public addItems() : Batch {
-        for (var i = 0; i < arguments.length; i++) {
+    public addItems(...items: any[]) : Batch {
+        for (var i = 0; i < items.length; i++) {
             this._items
-                .push(arguments[i]);
+                .push(items[i]);
         }
         
         return this
@@ -93,7 +95,9 @@ class Batch implements IBatch {
         return this._object;
     }
 
-    public operations : BatchOperation[] = [];
+    public get operations(): BatchOperation[] {
+        return this._operations;
+    }
     
     public setObjectProperties(properties) : Batch {
         if (!TypeUtils.isNullOrUndefined(properties)) {
@@ -346,10 +350,10 @@ class BatchOperation implements IBatchOperation {
     
     public action : (ctx : IBatchOperationContext) => void;
     
-    public addItems() : BatchOperation {
-        for (var i = 0; i < arguments.length; i++) {
+    public addItems(...items: any[]) : BatchOperation {
+        for (var i = 0; i < items.length; i++) {
             this._batch.items
-                       .push(arguments[i]);
+                       .push(items[i]);
         }
         
         return this;
@@ -776,9 +780,9 @@ export interface IBatch {
      * 
      * @chainable
      * 
-     * @param {Object} ...items One or more item to add.
+     * @param any ...items One or more item to add.
      */
-    addItems() : IBatch;
+    addItems(...items: any[]) : IBatch;
     
     /**
      * Adds a logger.
@@ -966,9 +970,9 @@ export interface IBatchOperation {
      * 
      * @chainable
      * 
-     * @param {Object} ...items One or more item to add.
+     * @param any ...items One or more item to add.
      */
-    addItems() : IBatchOperation;
+    addItems(...items: any[]) : IBatchOperation;
     
     /**
      * Adds a logger.

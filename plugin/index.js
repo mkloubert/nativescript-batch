@@ -27,15 +27,19 @@ var Batch = (function () {
     function Batch(firstAction) {
         this._invokeFinishedCheckForAll = false;
         this.loggers = [];
-        this.operations = [];
         this._items = new observable_array_1.ObservableArray();
         this._object = new observable_1.Observable();
+        this._operations = [];
         this._firstOperation = new BatchOperation(this, firstAction);
     }
     Batch.prototype.addItems = function () {
-        for (var i = 0; i < arguments.length; i++) {
+        var items = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            items[_i - 0] = arguments[_i];
+        }
+        for (var i = 0; i < items.length; i++) {
             this._items
-                .push(arguments[i]);
+                .push(items[i]);
         }
         return this;
     };
@@ -73,6 +77,13 @@ var Batch = (function () {
     Object.defineProperty(Batch.prototype, "object", {
         get: function () {
             return this._object;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Batch.prototype, "operations", {
+        get: function () {
+            return this._operations;
         },
         enumerable: true,
         configurable: true
@@ -284,9 +295,13 @@ var BatchOperation = (function () {
         batch.operations.push(this);
     }
     BatchOperation.prototype.addItems = function () {
-        for (var i = 0; i < arguments.length; i++) {
+        var items = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            items[_i - 0] = arguments[_i];
+        }
+        for (var i = 0; i < items.length; i++) {
             this._batch.items
-                .push(arguments[i]);
+                .push(items[i]);
         }
         return this;
     };
