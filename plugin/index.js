@@ -402,6 +402,9 @@ var BatchOperation = (function () {
         enumerable: true,
         configurable: true
     });
+    BatchOperation.prototype.next = function (action) {
+        return new BatchOperation(this._batch, action);
+    };
     Object.defineProperty(BatchOperation.prototype, "object", {
         get: function () {
             return this._batch.object;
@@ -453,7 +456,7 @@ var BatchOperation = (function () {
         return this;
     };
     BatchOperation.prototype.then = function (action) {
-        return new BatchOperation(this._batch, action);
+        return this.next(action);
     };
     BatchOperation.prototype.whenAllFinished = function (action) {
         this._batch.whenAllFinishedAction = action;

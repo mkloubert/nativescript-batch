@@ -456,6 +456,10 @@ class BatchOperation implements IBatchOperation {
     
     public name : string;
         
+    public next(action: (ctx : IBatchOperationContext) => void) : BatchOperation {
+        return new BatchOperation(this._batch, action);
+    }
+
     public get object() : Observable {
         return this._batch.object;
     }
@@ -517,7 +521,7 @@ class BatchOperation implements IBatchOperation {
     public successAction : (ctx : IBatchOperationContext) => void;
     
     public then(action : (ctx : IBatchOperationContext) => void) : BatchOperation {
-        return new BatchOperation(this._batch, action);
+        return this.next(action);
     }
     
     public whenAllFinished(action : (ctx : IBatchOperationContext) => void) : BatchOperation {
@@ -1091,6 +1095,15 @@ export interface IBatchOperation {
     name : string;
     
     /**
+     * Defines the next operation.
+     * 
+     * @chainable
+     * 
+     * @param {Function} action The logic of the next operation.
+     */
+    next(action: (ctx : IBatchOperationContext) => void) : IBatchOperation;
+
+    /**
      * Sets the ID of the underlying batch.
      * 
      * @param {String} id The new ID.
@@ -1179,13 +1192,13 @@ export interface IBatchOperation {
     success(successAction : (ctx : IBatchOperationContext) => void) : IBatchOperation;
     
     /**
-     * Defines the next operation.
+     * Alias for 'next()'.
      * 
      * @chainable
      * 
      * @param {Function} action The logic of the next operation.
      */
-    then(action : (ctx : IBatchOperationContext) => void) : IBatchOperation;
+    then(action: (ctx : IBatchOperationContext) => void) : IBatchOperation;
     
     /**
      * Defines the logic that is invoked after all operations have been finished.
