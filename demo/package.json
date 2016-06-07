@@ -11,6 +11,10 @@
   },
   "dependencies": {
     "nativescript-batch": "file:..\\plugin",
+    "nativescript-dev-typescript": "^0.3.2",
     "tns-core-modules": "2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^1.8.10"
   }
 }

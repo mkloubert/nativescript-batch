@@ -28,8 +28,7 @@ class Batch implements IBatch {
     private _invokeFinishedCheckForAll : boolean = false;
     private _items : ObservableArray<any>;
     private _name : string;
-    private _object : Observable;
-    private _operations : BatchOperation[] = [];
+    private _object : Observable;    
     private _result : any;
     private _value : any;
     
@@ -37,7 +36,7 @@ class Batch implements IBatch {
         this._items = new ObservableArray<any>();
         this._object = new Observable();
         
-        this._operations
+        this.operations
             .push(new BatchOperation(this, firstAction));
     }
     
@@ -72,7 +71,7 @@ class Batch implements IBatch {
     public beforeAction : (ctx : IBatchOperationContext) => void;
 
     public get firstOperation() : BatchOperation {
-        return this._operations[0];
+        return this.operations[0];
     }
     
     public id : string;
@@ -93,6 +92,8 @@ class Batch implements IBatch {
     public get object() : Observable {
         return this._object;
     }
+
+    public operations : BatchOperation[] = [];
     
     public setObjectProperties(properties) : Batch {
         if (!TypeUtils.isNullOrUndefined(properties)) {
@@ -120,7 +121,7 @@ class Batch implements IBatch {
     }
 
     public start() : any {
-        var finishedFlags : boolean[] = new Array(this._operations.length);
+        var finishedFlags: boolean[] = new Array(this.operations.length);
         for (var i = 0; i < finishedFlags.length; i++) {
             finishedFlags[i] = false;
         }
@@ -154,9 +155,9 @@ class Batch implements IBatch {
             };
         };
         
-        for (var i = 0; i < this._operations.length; i++) {
+        for (var i = 0; i < this.operations.length; i++) {
             var ctx = new BatchOperationContext(previousValue,
-                                                this._operations, i);
+                                                this.operations, i);
             ctx.result = result;
             ctx.value = value;
             
@@ -330,8 +331,9 @@ class BatchLogContext implements IBatchLogContext {
 }
 
 class BatchOperation implements IBatchOperation {
-    private _batch : Batch;
-    private _skipBefore : boolean = false;
+    private _batch: Batch;
+    private _id: string;
+    private _skipBefore: boolean = false;
 
     constructor(batch : Batch,
                 action : (ctx : IBatchOperationContext) => void) {
@@ -402,8 +404,25 @@ class BatchOperation implements IBatchOperation {
     
     public errorAction : (ctx : IBatchOperationContext) => void;
 
-    public id : string;
-    
+    public get id(): string {
+        return this._id;
+    }
+    public set id(value: string) {
+        // check for duplicate
+        for (var i = 0; i < this._batch.operations.length; i++) {
+            var bo = this._batch.operations[i];
+            if (bo === this) {
+                continue;
+            }
+
+            if (bo.id == value) {
+                throw "ID '" + value + "' has already be defined in operation #" + i + "!";
+            }
+        }
+
+        this._id = value;
+    }
+
     public ignoreErrors(flag? : boolean) : BatchOperation {
         this.ignoreOperationErrors = arguments.length < 1 ? true : flag;
         return this;
@@ -1196,7 +1215,7 @@ export interface IBatchOperationContext extends IBatchLogger {
     batchName : string;
     
     /**
-     * Cancels all opcoming operations.
+     * Cancels all upcoming operations.
      * 
      * @chainable
      * 

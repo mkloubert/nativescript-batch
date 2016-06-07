@@ -26,11 +26,11 @@ var TypeUtils = require("utils/types");
 var Batch = (function () {
     function Batch(firstAction) {
         this._invokeFinishedCheckForAll = false;
-        this._operations = [];
         this.loggers = [];
+        this.operations = [];
         this._items = new observable_array_1.ObservableArray();
         this._object = new observable_1.Observable();
-        this._operations
+        this.operations
             .push(new BatchOperation(this, firstAction));
     }
     Batch.prototype.addItems = function () {
@@ -55,7 +55,7 @@ var Batch = (function () {
     };
     Object.defineProperty(Batch.prototype, "firstOperation", {
         get: function () {
-            return this._operations[0];
+            return this.operations[0];
         },
         enumerable: true,
         configurable: true
@@ -99,7 +99,7 @@ var Batch = (function () {
         return this;
     };
     Batch.prototype.start = function () {
-        var finishedFlags = new Array(this._operations.length);
+        var finishedFlags = new Array(this.operations.length);
         for (var i = 0; i < finishedFlags.length; i++) {
             finishedFlags[i] = false;
         }
@@ -126,8 +126,8 @@ var Batch = (function () {
                 }
             };
         };
-        for (var i = 0; i < this._operations.length; i++) {
-            var ctx = new BatchOperationContext(previousValue, this._operations, i);
+        for (var i = 0; i < this.operations.length; i++) {
+            var ctx = new BatchOperationContext(previousValue, this.operations, i);
             ctx.result = result;
             ctx.value = value;
             ctx.checkIfFinishedAction = createCheckIfFinishedAction(i);
@@ -344,6 +344,26 @@ var BatchOperation = (function () {
         this.errorAction = errAction;
         return this;
     };
+    Object.defineProperty(BatchOperation.prototype, "id", {
+        get: function () {
+            return this._id;
+        },
+        set: function (value) {
+            // check for duplicate
+            for (var i = 0; i < this._batch.operations.length; i++) {
+                var bo = this._batch.operations[i];
+                if (bo === this) {
+                    continue;
+                }
+                if (bo.id == value) {
+                    throw "ID '" + value + "' has already be defined in operation #" + i + "!";
+                }
+            }
+            this._id = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
     BatchOperation.prototype.ignoreErrors = function (flag) {
         this.ignoreOperationErrors = arguments.length < 1 ? true : flag;
         return this;
