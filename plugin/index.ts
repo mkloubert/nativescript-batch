@@ -25,19 +25,19 @@ import {ObservableArray} from "data/observable-array";
 import TypeUtils = require("utils/types");
 
 class Batch implements IBatch {
-    private _invokeFinishedCheckForAll : boolean = false;
-    private _items : ObservableArray<any>;
-    private _name : string;
-    private _object : Observable;    
-    private _result : any;
-    private _value : any;
+    private _firstOperation: BatchOperation;
+    private _invokeFinishedCheckForAll: boolean = false;
+    private _items: ObservableArray<any>;
+    private _name: string;
+    private _object: Observable;    
+    private _result: any;
+    private _value: any;
     
     constructor(firstAction : (ctx : IBatchOperationContext) => void) {
         this._items = new ObservableArray<any>();
         this._object = new Observable();
         
-        this.operations
-            .push(new BatchOperation(this, firstAction));
+        this._firstOperation = new BatchOperation(this, firstAction);
     }
     
     public addItems() : Batch {
@@ -71,7 +71,7 @@ class Batch implements IBatch {
     public beforeAction : (ctx : IBatchOperationContext) => void;
 
     public get firstOperation() : BatchOperation {
-        return this.operations[0];
+        return this._firstOperation;
     }
     
     public id : string;
@@ -340,6 +340,8 @@ class BatchOperation implements IBatchOperation {
                     
         this._batch = batch;
         this.action = action;
+
+        batch.operations.push(this);
     }
     
     public action : (ctx : IBatchOperationContext) => void;

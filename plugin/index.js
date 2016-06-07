@@ -30,8 +30,7 @@ var Batch = (function () {
         this.operations = [];
         this._items = new observable_array_1.ObservableArray();
         this._object = new observable_1.Observable();
-        this.operations
-            .push(new BatchOperation(this, firstAction));
+        this._firstOperation = new BatchOperation(this, firstAction);
     }
     Batch.prototype.addItems = function () {
         for (var i = 0; i < arguments.length; i++) {
@@ -55,7 +54,7 @@ var Batch = (function () {
     };
     Object.defineProperty(Batch.prototype, "firstOperation", {
         get: function () {
-            return this.operations[0];
+            return this._firstOperation;
         },
         enumerable: true,
         configurable: true
@@ -282,6 +281,7 @@ var BatchOperation = (function () {
         this.ignoreOperationErrors = false;
         this._batch = batch;
         this.action = action;
+        batch.operations.push(this);
     }
     BatchOperation.prototype.addItems = function () {
         for (var i = 0; i < arguments.length; i++) {
