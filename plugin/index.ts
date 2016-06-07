@@ -628,6 +628,10 @@ class BatchOperationContext implements IBatchOperationContext {
     public get isLast() : boolean {
         return this._isLast;
     }
+
+    public get items(): ObservableArray<any> {
+        return this._operation.items;
+    }
     
     public log(msg) : BatchOperationContext {
         var ctx = new BatchLogContext(this,
@@ -651,6 +655,10 @@ class BatchOperationContext implements IBatchOperationContext {
     }
 
     public nextValue : any;
+
+    public get object(): Observable {
+        return this._operation.object;
+    }    
 
     public get operation() : BatchOperation {
         return this._operation;
@@ -1317,6 +1325,13 @@ export interface IBatchOperationContext extends IBatchLogger {
     isLast : boolean;
 
     /**
+     * Gets the batch wide (observable) array of items.
+     * 
+     * @property
+     */
+    items: ObservableArray<any>;
+
+    /**
      * Gets the name of the underlying operation.
      * 
      * @property
@@ -1330,6 +1345,13 @@ export interface IBatchOperationContext extends IBatchLogger {
      */
     nextValue : any;
     
+    /**
+     * Gets the batch wide (observable) object.
+     * 
+     * @property
+     */
+    object: Observable;
+
     /**
      * Gets the underlying operation.
      * 

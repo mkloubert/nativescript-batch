@@ -560,6 +560,13 @@ var BatchOperationContext = (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(BatchOperationContext.prototype, "items", {
+        get: function () {
+            return this._operation.items;
+        },
+        enumerable: true,
+        configurable: true
+    });
     BatchOperationContext.prototype.log = function (msg) {
         var ctx = new BatchLogContext(this, new Date(), msg);
         for (var i = 0; i < this.batch.loggers.length; i++) {
@@ -575,6 +582,13 @@ var BatchOperationContext = (function () {
     Object.defineProperty(BatchOperationContext.prototype, "name", {
         get: function () {
             return this.operation.name;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(BatchOperationContext.prototype, "object", {
+        get: function () {
+            return this._operation.object;
         },
         enumerable: true,
         configurable: true
